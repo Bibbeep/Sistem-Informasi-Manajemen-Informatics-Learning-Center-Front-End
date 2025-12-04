@@ -59,6 +59,25 @@ const ProgramPage = () => {
     }
   }, [selectedProgram]);
 
+  // Effect to check for program ID from localStorage for modal
+  useEffect(() => {
+    const programIdFromLocalStorage = localStorage.getItem('selectedProgramIdForModal');
+    if (programIdFromLocalStorage) {
+      localStorage.removeItem('selectedProgramIdForModal'); // Clear it immediately
+
+      const fetchSpecificProgram = async () => {
+        try {
+          const response = await api.get(`/programs`, { params: { id: programIdFromLocalStorage } });
+          setSelectedProgram(response.data.data.programs[0]); // Access the first program from the array
+        } catch (err) {
+          console.error('Failed to fetch specific program for modal:', err);
+          // Optionally, show a toast error here
+        }
+      };
+      fetchSpecificProgram();
+    }
+  }, []); // Run only once on mount
+
   // Fetch enrolled programs
   useEffect(() => {
     const fetchEnrolledPrograms = async () => {
