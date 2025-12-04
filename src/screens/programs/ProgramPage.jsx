@@ -1,0 +1,187 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Sidebar from '../sidebar/Sidebar';
+import ProfileBar from '../profilebar/ProfileBar';
+import DashboardHeader from '../dashboard/components/DashboardHeader';
+import CourseCard from './components/CourseCard';
+import Filter from './components/Filter';
+import api from '../../services/api';
+import useDebounce from '../../hooks/useDebounce';
+import './course.css';
+
+// Format Rupiah
+const formatRupiah = (angka) => {
+  if (angka === null || angka === undefined || Number(angka) === 0) return 'Gratis';
+  return 'Rp. ' + Number(angka).toLocaleString('id-ID');
+};
+
+// Format tanggal: 27 Mei 2025
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  const options = { day: 'numeric', month: 'long', year: 'numeric' };
+  return date.toLocaleDateString('id-ID', options);
+};
+
+const typeImageMap = {
+  Course: "/images/course_thumb.png",
+  Competition: "/images/competition_thumb.png",
+  Seminar: "/images/seminar_thumb.png",
+  Workshop: "/images/workshop_thumb.png",
+};
+
+const ProgramPage = () => {
+  const [programs, setPrograms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState('All');
+  const [selectedProgram, setSelectedProgram] = useState(null);
+  const [modalImgSrc, setModalImgSrc] = useState('');
+  const navigate = useNavigate();
+
+  const debouncedSearchKeyword = useDebounce(searchKeyword, 500); // 500ms delay
+
+  useEffect(() => {
+    if (selectedProgram) {
+      setModalImgSrc(selectedProgram.thumbnailUrl);
+    }
+  }, [selectedProgram]);
+
+  const fetchPrograms = async (currentPage, filter, isSearchOrFilterChange = false) => {
+    setLoading(true);
+    try {
+      const response = await api.get('/programs', {
+        params: {
+          type: filter === 'All' ? 'all' : filter.toLowerCase(),
+          limit: 10,
+          page: currentPage,
+          title: debouncedSearchKeyword ? debouncedSearchKeyword : undefined,
+        },
+        paramsSerializer: params => {
+          return Object.entries(params)
+            .map(([key, value]) => (value !== undefined && value !== null) ? `${encodeURIComponent(key)}=${encodeURIComponent(value)}` : null)
+            .filter(p => p !== null)
+            .join('&');
+        }
+      });
+      
+      const { data, pagination } = response.data;
+
+      setPrograms(prev => isSearchOrFilterChange ? data.programs : [...prev, ...data.programs]);
+      setHasMore(pagination.currentPage < pagination.totalPages);
+      setError(null);
+    } catch (err) {
+      setError('Gagal memuat program. Silakan coba lagi nanti.');
+      console.error('Fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    setPrograms([]);
+    setPage(1);
+    fetchPrograms(1, selectedFilter, true);
+  }, [debouncedSearchKeyword, selectedFilter]);
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchPrograms(nextPage, selectedFilter);
+  };
+
+  const handleSearch = (keyword) => {
+    setSearchKeyword(keyword);
+  };
+
+  const handleFilterSelect = (filter) => {
+    setSelectedFilter(filter);
+  };
+  
+  const handleJoinProgram = (program) => {
+    localStorage.setItem('selectedProgram', JSON.stringify(program));
+    navigate('/payment');
+  }
+
+  return (
+    <div className="course-container">
+      <Sidebar />
+      <div className="course-content">
+        <DashboardHeader onSearch={handleSearch} />
+        
+        <Filter selected={selectedFilter} onSelect={handleFilterSelect} />
+        
+        {error && <p className="error-message">{error}</p>}
+
+        <div className="course-grid">
+          {programs.length === 0 && !loading && <p>No programs found.</p>}
+          {programs.map((program) => (
+            <CourseCard
+              key={program.id}
+              title={program.title}
+              type={program.type}
+              image={program.thumbnailUrl}
+              date={program.availableDate}
+              price={program.priceIdr}
+              description={program.description}
+              onClick={() => setSelectedProgram(program)}
+            />
+          ))}
+        </div>
+
+        {loading && programs.length === 0 && <p>Loading...</p>}
+
+        {!loading && hasMore && (
+          <div className="load-more-container">
+            <button onClick={handleLoadMore} className="load-more-btn">
+              Load More
+            </button>
+          </div>
+        )}
+      </div>
+      <ProfileBar />
+
+      {selectedProgram && (
+        <div className="modal-overlay" onClick={() => setSelectedProgram(null)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <img 
+              src={modalImgSrc || (typeImageMap[selectedProgram.type] || '/images/default.png')} 
+              alt={selectedProgram.title} 
+              className="modal-image"
+              onError={() => {
+                setModalImgSrc(typeImageMap[selectedProgram.type] || '/images/default.png');
+              }}
+            />
+            <h3>{selectedProgram.title}</h3>
+            <p>{selectedProgram.description || '-'}</p>
+            <p>
+              <strong>Tanggal:</strong> {formatDate(selectedProgram.availableDate)}
+            </p>
+            <p>
+              <strong>Harga:</strong> {formatRupiah(selectedProgram.priceIdr)}
+            </p>
+            <p>
+              <strong>Jenis:</strong> {selectedProgram.type || '-'}
+            </p>
+            <div className="modal-buttons">
+              <button
+                className="pay"
+                onClick={() => handleJoinProgram(selectedProgram)}
+              >
+                Join
+              </button>
+              <button className="close" onClick={() => setSelectedProgram(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ProgramPage;

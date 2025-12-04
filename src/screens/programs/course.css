@@ -69,3 +69,36 @@
     transform: translateY(-6px);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
+/* New styles for Load More button */
+.load-more-container {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+}
+
+.load-more-btn {
+    background-color: #3b82f6; /* Blue theme color */
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+}
+
+.load-more-btn:hover {
+    background-color: #2563eb; /* Darker blue on hover */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(59, 130, 246, 0.4);
+}
+
+.load-more-btn:disabled {
+    background-color: #a0c3e6; /* Lighter blue when disabled */
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
