@@ -55,7 +55,7 @@ const MateriPage = () => {
   };
 
   const getProgramImage = (program) => {
-    return program.programThumbnailUrl || typeImageMap[program.programType] || "/images/default.png";
+    return program && program.programThumbnailUrl ? program.programThumbnailUrl : (typeImageMap[program.programType] || "/images/default.png");
   };
 
   const renderContent = () => {

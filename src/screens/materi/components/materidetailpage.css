@@ -50,6 +50,33 @@ body {
   font-weight: 700;
 }
 
+/* Style for program meta details */
+.program-meta-details,
+.program-specific-details {
+    color: #0d3b66; /* Dark blue for readability */
+    margin-bottom: 20px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.program-meta-details p,
+.program-specific-details p {
+    margin-bottom: 5px;
+    font-size: 1.05em;
+    line-height: 1.5;
+}
+
+.program-meta-details a,
+.program-specific-details a {
+    color: #3b82f6; /* Link color */
+    text-decoration: none;
+}
+
+.program-meta-details a:hover,
+.program-specific-details a:hover {
+    text-decoration: underline;
+}
+
 /* Tombol kembali */
 .back-button {
   background-color: #ef4444;
@@ -135,3 +162,10 @@ body {
 .youtube-thumbnail:hover {
   transform: scale(1.02);
 }
+
+.completed-icon {
+  color: #22c55e; /* green-500 */
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
