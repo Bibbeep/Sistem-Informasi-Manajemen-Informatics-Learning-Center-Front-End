@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   FaHome, FaBook, FaComments,
-  FaMoneyBill, FaSignOutAlt, FaFolderOpen // Added FaFolderOpen
+  FaMoneyBill, FaSignOutAlt, FaFolderOpen, FaCertificate // Added FaCertificate
 } from 'react-icons/fa';
 import './sidebar.css';
 import { useAuth } from '../../context/AuthContext';
@@ -38,6 +38,9 @@ const Sidebar = () => {
           </NavLink>
           <NavLink to="/payment" className="nav-item" activeclassname="active">
             <FaMoneyBill /> Payments
+          </NavLink>
+          <NavLink to="/certificates" className="nav-item" activeclassname="active">
+            <FaCertificate /> Certificates
           </NavLink>
         </div>
         

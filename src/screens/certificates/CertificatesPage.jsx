@@ -75,6 +75,9 @@ const CertificatesPage = () => {
   const formatDateString = (dateStr) => {
     if (!dateStr) return 'N/A';
     const date = new Date(dateStr);
+    if (isNaN(date.getTime()) || date.getTime() === 0) { // Check for invalid date OR Unix epoch (Jan 1, 1970)
+      return 'N/A';
+    }
     const options = { day: 'numeric', month: 'long', year: 'numeric' };
     return date.toLocaleDateString('id-ID', options);
   };
@@ -121,14 +124,16 @@ const CertificatesPage = () => {
                 <div className="certificate-card" key={cert.id}>
                   <CertificateImage src={cert.programThumbnailUrl} alt={cert.title} />
                   <div className="certificate-content">
-                    <h3>{cert.title}</h3>
-                    <p>Issued: {formatDateString(cert.issuedAt)}</p>
-                    {cert.documentUrl && (
-                      <a href={cert.documentUrl} target="_blank" rel="noopener noreferrer" className="download-button">
-                        Download
-                      </a>
-                    )}
-                  </div>
+                                      <h3>{cert.title}</h3>
+                                      <p>Issued: {formatDateString(cert.issuedAt)}</p>
+                                      {cert.programType === 'Course' && cert.expiredAt && (
+                                        <p>Expires: {formatDateString(cert.expiredAt)}</p>
+                                      )}
+                                      {cert.documentUrl && (
+                                        <a href={cert.documentUrl} target="_blank" rel="noopener noreferrer" className="download-button">
+                                          Download
+                                        </a>
+                                      )}                  </div>
                 </div>
               ))
             ) : (
