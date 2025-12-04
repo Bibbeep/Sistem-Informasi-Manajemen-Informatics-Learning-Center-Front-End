@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import YouTube from 'react-youtube';
 import Sidebar from '../../sidebar/Sidebar';
@@ -7,6 +7,8 @@ import api from '../../../services/api';
 import './materidetailpage.css';
 import { FaCheckCircle } from 'react-icons/fa';
 import { useAuth } from '../../../context/AuthContext';
+import { ToastContainer, toast } from 'react-toastify';
+
 
 const extractYoutubeVideoId = (url) => {
   if (!url) return null;
@@ -32,10 +34,32 @@ const MateriDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [enrollmentId, setEnrollmentId] = useState(null);
+  const [enrollmentStatus, setEnrollmentStatus] = useState(null); // New state for enrollment status
+  const [markAsCompleteLoading, setMarkAsCompleteLoading] = useState(false);
+
+  const playerRefs = useRef({}); // Ref to hold YouTube player instances
   const [moduleInteractions, setModuleInteractions] = useState({});
 
+  // Cleanup effect to destroy players on unmount
   useEffect(() => {
-    if (!programId || !user) {
+    return () => {
+      Object.values(playerRefs.current).forEach(player => {
+        if (player && typeof player.destroy === 'function') {
+          player.destroy();
+        }
+      });
+      playerRefs.current = {}; // Clear refs
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!programId) {
+      setError("Program ID not found.");
+      setLoading(false);
+      return;
+    }
+    if (!user) {
+      setError("Please log in to view this page.");
       setLoading(false);
       return;
     }
@@ -43,30 +67,34 @@ const MateriDetailPage = () => {
     const fetchProgramData = async () => {
       try {
         setLoading(true);
+        // Fetch program details
         const programRes = await api.get(`/programs/${programId}`);
         const programData = programRes.data.data.program;
         setProgram(programData);
 
-        if (programData.type === 'Course') {
-          const enrollmentRes = await api.get('/enrollments', { params: { programId, userId: user.sub } });
-          const enrollment = enrollmentRes.data.data.enrollments[0];
+        // Fetch enrollment details for the current user and program
+        const enrollmentListRes = await api.get('/enrollments', { params: { programId, userId: user.sub } });
+        const enrollmentSummary = enrollmentListRes.data.data.enrollments[0];
 
-          if (enrollment) {
-            setEnrollmentId(enrollment.id);
-            const enrollmentDetailRes = await api.get(`/enrollments/${enrollment.id}`);
+        if (enrollmentSummary) {
+          setEnrollmentId(enrollmentSummary.id);
+          setEnrollmentStatus(enrollmentSummary.status); // Set enrollment status
+
+          // If it's a Course, fetch modules and completed modules
+          if (programData.type === 'Course') {
+            const enrollmentDetailRes = await api.get(`/enrollments/${enrollmentSummary.id}`);
             const enrollmentDetails = enrollmentDetailRes.data.data.enrollment;
             if (enrollmentDetails.completedModules) {
               setCompletedModules(new Set(enrollmentDetails.completedModules.map(m => m.courseModuleId)));
             }
-
             const modulesRes = await api.get(`/programs/${programId}/modules`);
             setModules(modulesRes.data.data.modules);
-          } else {
-            setError("You are not enrolled in this course.");
           }
+        } else {
+          throw new Error("You are not enrolled in this program.");
         }
       } catch (err) {
-        setError("Failed to load program details.");
+        setError("Failed to load program details. " + (err.message || ""));
         console.error("Fetch error:", err);
       } finally {
         setLoading(false);
@@ -94,6 +122,7 @@ const MateriDetailPage = () => {
         setCompletedModules(prev => new Set(prev).add(moduleId));
       } catch (err) {
         console.error(`Failed to mark module ${moduleId} as complete.`, err);
+        toast.error(`Gagal menandai modul selesai. Mohon coba lagi.`);
       }
     }
   };
@@ -107,6 +136,26 @@ const MateriDetailPage = () => {
     setModuleInteractions(prev => ({...prev, [moduleId]: { ...prev[moduleId], materialClicked: true }}));
     checkAndCompleteModule(moduleId, false, true);
   };
+
+  const handleMarkAsComplete = async () => {
+    if (!enrollmentId) {
+      toast.error("Tidak dapat menandai selesai: ID Enrollment tidak ditemukan.");
+      return;
+    }
+    setMarkAsCompleteLoading(true);
+    try {
+      await api.patch(`/enrollments/${enrollmentId}`, { status: 'Completed' });
+      setEnrollmentStatus('completed'); // Update local state
+      toast.success("Program berhasil ditandai selesai!");
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || "Gagal menandai program selesai.";
+      toast.error(errorMessage);
+      console.error("Error marking program as complete:", err);
+    } finally {
+      setMarkAsCompleteLoading(false);
+    }
+  };
+
 
   const renderModuleContent = () => {
     if (modules.length === 0) return <p style={{ color: "#ccc" }}>Belum ada modul untuk program ini.</p>;
@@ -126,7 +175,8 @@ const MateriDetailPage = () => {
               <div className="youtube-embed">
                 <YouTube
                   videoId={videoId}
-                  onEnd={() => handleVideoEnd(modul.id)}
+                  onReady={(event) => (playerRefs.current[modul.id] = event.target)}
+                  onEnd={() => handleVideoEnd(modul.id)} // Use onEnd directly
                   opts={{ width: '100%', height: '100%' }}
                 />
               </div>
@@ -146,7 +196,9 @@ const MateriDetailPage = () => {
   
   const renderProgramSpecificDetails = () => {
     if (!program || !program.details) return null;
+
     const { details } = program;
+
     switch (program.type) {
       case 'Seminar':
         return (
@@ -184,11 +236,36 @@ const MateriDetailPage = () => {
           <h2 className="materi-detail-title">{program?.title || 'Loading Program...'}</h2>
           <button className="back-button" onClick={() => navigate(-1)}>Back</button>
         </div>
+        
         <div className="program-meta-details">
           <p><strong>Jenis Program:</strong> {program?.type}</p>
           <p><strong>Tanggal:</strong> {formatDate(program?.availableDate)}</p>
           {renderProgramSpecificDetails()}
         </div>
+
+        {program?.type !== 'Course' && enrollmentStatus !== 'completed' && enrollmentStatus !== 'unpaid' && (
+            <div className="mark-complete-section">
+                <button 
+                    onClick={handleMarkAsComplete} 
+                    disabled={markAsCompleteLoading} 
+                    className="mark-complete-button"
+                >
+                    {markAsCompleteLoading ? 'Menandai Selesai...' : 'Tandai Selesai'}
+                </button>
+            </div>
+        )}
+        {program?.type !== 'Course' && enrollmentStatus === 'completed' && (
+             <div className="mark-complete-section">
+                <p style={{color: '#22c55e', fontWeight: 'bold'}}>Program ini telah selesai!</p>
+            </div>
+        )}
+        {program?.type !== 'Course' && enrollmentStatus === 'unpaid' && (
+             <div className="mark-complete-section">
+                <p style={{color: 'orange', fontWeight: 'bold'}}>Program ini belum dibayar. Mohon selesaikan pembayaran.</p>
+            </div>
+        )}
+
+
         <div className="materi-detail-modules">
           {loading ? (
             <p style={{ color: "#ccc" }}>Loading modules...</p>
@@ -202,6 +279,7 @@ const MateriDetailPage = () => {
         </div>
       </div>
       <ProfileBar />
+      <ToastContainer position="top-center" autoClose={3000} />
     </div>
   );
 };
