@@ -3,9 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import './left.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useAuth } from '../../../context/AuthContext';
+import api from '../../../services/api';
 
 const Left = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,16 +18,16 @@ const Left = () => {
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
 
-  const [resetMode, setResetMode] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [resetLoading, setResetLoading] = useState(false);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!email.trim()) {
       toast.error('Email tidak boleh kosong!');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Format email tidak valid!');
       return;
     }
     if (!password) {
@@ -32,29 +36,33 @@ const Left = () => {
     }
 
     setLoading(true);
-
     try {
-      const response = await fetch('http://localhost/react-backend/login.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-      setLoading(false);
-
-      if (data.success) {
-        toast.success(data.message);
-        localStorage.setItem('loggedInUser', JSON.stringify(data.user));
-        setTimeout(() => {
-          navigate(data.user.role === 'admin' ? '/admin/dashboard' : '/dashboard');
-        }, 1000);
-      } else {
-        toast.error(data.message || 'Login gagal');
-      }
+      const user = await login(email, password);
+      toast.success('Login berhasil!');
+      setTimeout(() => {
+        navigate(user.admin ? '/admin/dashboard' : '/dashboard');
+      }, 1000);
     } catch (error) {
+      let errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
+      if (error.response) {
+        if (error.response.status === 401) {
+          errorMessage = 'Email atau password salah.';
+        } else if (error.response.status === 400) {
+          const errors = error.response.data?.errors;
+          if (errors && errors.length > 0) {
+            errorMessage = errors.map(err => err.message).join('; ');
+          } else {
+            errorMessage = error.response.data?.message || 'Permintaan tidak valid.';
+          }
+        } else {
+          errorMessage = error.response.data?.message || 'Gagal login karena kesalahan server.';
+        }
+      } else if (error.request) {
+        errorMessage = 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
+      }
+      toast.error(errorMessage);
+    } finally {
       setLoading(false);
-      toast.error('Terjadi kesalahan saat login');
     }
   };
 
@@ -67,107 +75,22 @@ const Left = () => {
 
     setForgotLoading(true);
     try {
-      const response = await fetch('http://localhost/react-backend/forgot_password.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: forgotEmail }),
-      });
-
-      const data = await response.json();
-      setForgotLoading(false);
-
-      if (data.success) {
-        toast.success('Instruksi reset password telah dikirim ke email Anda.');
-        setForgotEmail('');
-        setForgotMode(false);
-        setResetMode(true); // Simulasi: langsung masuk ke reset password
-      } else {
-        toast.error(data.message || 'Gagal mengirim instruksi.');
-      }
+      const response = await api.post('/auth/forgot-password', { email: forgotEmail });
+      
+      toast.success(response.data.message || 'Jika email terdaftar, instruksi reset password telah dikirim.');
+      setForgotMode(false);
     } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Gagal mengirim instruksi reset password.';
+      toast.error(errorMessage);
+    } finally {
       setForgotLoading(false);
-      toast.error('Terjadi kesalahan saat mengirim permintaan.');
-    }
-  };
-
-  const handleResetPassword = async (e) => {
-    e.preventDefault();
-
-    if (!newPassword || !confirmPassword) {
-      toast.error('Semua kolom wajib diisi!');
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      toast.error('Password tidak cocok!');
-      return;
-    }
-
-    setResetLoading(true);
-
-    try {
-      // Simulasi kirim password baru ke backend
-      const response = await fetch('http://localhost/react-backend/reset_password.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          newPassword,
-          token: 'dummy-token-dari-email', // nanti bisa ambil dari URL param
-        }),
-      });
-
-      const data = await response.json();
-      setResetLoading(false);
-
-      if (data.success) {
-        toast.success('Password berhasil direset. Silakan login.');
-        setResetMode(false);
-      } else {
-        toast.error(data.message || 'Reset password gagal.');
-      }
-    } catch (error) {
-      setResetLoading(false);
-      toast.error('Terjadi kesalahan saat reset password.');
     }
   };
 
   return (
     <div className="login-container">
       <div className="form-box">
-        {resetMode ? (
-          <>
-            <h2>Buat Password Baru</h2>
-            <br/>
-            <form className="form" onSubmit={handleResetPassword}>
-              <input
-                type="password"
-                placeholder="Password Baru"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                disabled={resetLoading}
-              />
-              <input
-                type="password"
-                placeholder="Konfirmasi Password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                disabled={resetLoading}
-              />
-              <button type="submit" className="submit-btn" disabled={resetLoading}>
-                {resetLoading ? 'Menyimpan...' : 'Reset Password'}
-              </button>
-            </form>
-            <p
-              className="forgot-password-link"
-              style={{ cursor: 'pointer', color: 'blue', marginTop: '10px' }}
-              onClick={() => {
-                setResetMode(false);
-              }}
-            >
-              Kembali ke Login
-            </p>
-          </>
-        ) : !forgotMode ? (
+        {!forgotMode ? (
           <>
             <h2>Login To Your Account</h2>
             <br/>
@@ -207,7 +130,7 @@ const Left = () => {
           <>
             <h2>Reset Password</h2>
             <p style={{ marginBottom: '30px' }}>
-              Masukkan email Anda untuk instruksi reset password!
+              Masukkan email Anda untuk menerima link reset password.
             </p>
             <form className="form" onSubmit={handleForgotSubmit}>
               <input
@@ -218,7 +141,7 @@ const Left = () => {
                 disabled={forgotLoading}
               />
               <button type="submit" className="submit-btn" disabled={forgotLoading}>
-                {forgotLoading ? 'Mengirim...' : 'Kirim Instruksi'}
+                {forgotLoading ? 'Mengirim...' : 'Kirim Link Reset'}
               </button>
             </form>
             <p

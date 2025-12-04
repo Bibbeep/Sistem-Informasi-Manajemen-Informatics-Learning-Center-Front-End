@@ -2,26 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './homepage.css';
 
-const programs = [
-  { title: 'ReactJS Dasar', type: 'Course', date: '2025-06-01', harga: 50000 },
-  { title: 'NextJS Lanjutan', type: 'Course', date: '2025-06-15', harga: 70000 },
-  { title: 'VueJS untuk Pemula', type: 'Course', date: '2025-06-12', harga: 55000 },
-  { title: 'NodeJS Intermediate', type: 'Course', date: '2025-06-22', harga: 65000 },
-  { title: 'Workshop UI/UX', type: 'Workshop', date: '2025-06-05', harga: 60000 },
-  { title: 'Figma Pro Design', type: 'Workshop', date: '2025-06-20', harga: 65000 },
-  { title: 'Design Sprint', type: 'Workshop', date: '2025-06-25', harga: 70000 },
-  { title: 'Data Science Intro', type: 'Seminar', date: '2025-06-10', harga: 85000 },
-  { title: 'Tech Future Talk', type: 'Seminar', date: '2025-06-18', harga: 80000 },
-  { title: 'AI Ethics Seminar', type: 'Seminar', date: '2025-06-27', harga: 82000 },
-  { title: 'AI Challenge 2025', type: 'Competition', date: '2025-06-15', harga: 75000 },
-  { title: 'Hackathon UNTAN', type: 'Competition', date: '2025-06-25', harga: 100000 },
-  { title: 'Code Arena', type: 'Competition', date: '2025-06-30', harga: 90000 },
-  { title: 'UI/UX Seminar', type: 'Seminar', date: '2025-06-27', harga: 98000 },
-  { title: 'NLP Challenge 2025', type: 'Competition', date: '2025-06-15', harga: 50000 },
-  { title: 'NodeJS Advanced', type: 'Course', date: '2025-06-22', harga: 135000 },
-  { title: 'Workshop ReactJS', type: 'Workshop', date: '2025-06-05', harga: 68000 },
-];
-
 const programDescriptions = {
   Course: 'Pelatihan intensif untuk meningkatkan keterampilan teknis secara bertahap dan terstruktur.',
   Workshop: 'Sesi praktikal dan interaktif untuk memperdalam pemahaman lewat praktik langsung.',
@@ -30,11 +10,17 @@ const programDescriptions = {
 };
 
 const formatDate = (dateStr) => {
-  const [year, month, day] = dateStr.split('-');
+  const date = new Date(dateStr);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
   return `${day}/${month}/${year}`;
 };
 
 const formatHarga = (harga) => {
+  if (harga === null || harga === undefined) {
+    return 'Harga tidak tersedia';
+  }
   if (harga === 0 || harga === 'Gratis') return 'Gratis';
   return `Rp ${harga.toLocaleString('id-ID', {
     minimumFractionDigits: 2,
@@ -45,15 +31,137 @@ const formatHarga = (harga) => {
 const HomePage = () => {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
+  const [courses, setCourses] = useState([]);
+  const [workshops, setWorkshops] = useState([]);
+  const [seminars, setSeminars] = useState([]);
+  const [competitions, setCompetitions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const [pagination, setPagination] = useState({
+    Course: { page: 1, hasMore: true },
+    Workshop: { page: 1, hasMore: true },
+    Seminar: { page: 1, hasMore: true },
+    Competition: { page: 1, hasMore: true },
+  });
+
+  const [loadingMore, setLoadingMore] = useState({
+    Course: false,
+    Workshop: false,
+    Seminar: false,
+    Competition: false,
+  });
+
+  const [contactFullName, setContactFullName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactMessage, setContactMessage] = useState('');
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactSuccess, setContactSuccess] = useState('');
+  const [contactError, setContactError] = useState('');
+
   const aboutRef = useRef(null);
   const programRef = useRef(null);
   const contactRef = useRef(null);
 
-  // ✅ Carousel refs untuk masing-masing program type
   const courseRef = useRef(null);
   const workshopRef = useRef(null);
   const seminarRef = useRef(null);
   const competitionRef = useRef(null);
+
+  const fetchProgramData = async (type, setState, page = 1) => {
+    try {
+      const lowerCaseType = type.toLowerCase();
+      const response = await fetch(`${process.env.REACT_APP_API_ENDPOINT}/api/v1/programs?type=${lowerCaseType}&limit=10&page=${page}&sort=availableDate`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${type}`);
+      }
+      const data = await response.json();
+      if (page > 1) {
+        setState(prev => [...prev, ...data.data.programs]);
+      } else {
+        setState(data.data.programs);
+      }
+      setPagination(prev => ({
+        ...prev,
+        [type]: {
+          page: data.pagination.currentPage,
+          hasMore: data.pagination.currentPage < data.pagination.totalPages,
+        },
+      }));
+    } catch (err) {
+      setError(prevError => prevError || err.message);
+    }
+  };
+
+  useEffect(() => {
+    const fetchAllPrograms = async () => {
+        setLoading(true);
+        await Promise.all([
+            fetchProgramData('Course', setCourses),
+            fetchProgramData('Workshop', setWorkshops),
+            fetchProgramData('Seminar', setSeminars),
+            fetchProgramData('Competition', setCompetitions)
+        ]);
+        setLoading(false);
+    };
+
+    fetchAllPrograms();
+  }, []);
+
+  const fetchMorePrograms = async (type) => {
+    if (loadingMore[type] || !pagination[type].hasMore) return;
+
+    setLoadingMore(prev => ({ ...prev, [type]: true }));
+
+    const next_page = pagination[type].page + 1
+    const setState = (setter) => {
+        if(type === "Course") return setCourses(setter)
+        if(type === "Workshop") return setWorkshops(setter)
+        if(type === "Seminar") return setSeminars(setter)
+        if(type === "Competition") return setCompetitions(setter)
+    }
+
+    await fetchProgramData(type, setState, next_page);
+
+    setLoadingMore(prev => ({ ...prev, [type]: false }));
+  };
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    setContactLoading(true);
+    setContactSuccess('');
+    setContactError('');
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_ENDPOINT}/api/v1/feedbacks`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          fullName: contactFullName, 
+          email: contactEmail, 
+          message: contactMessage 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send message.');
+      }
+
+      setContactSuccess('Pesan Anda berhasil terkirim!');
+      setContactFullName('');
+      setContactEmail('');
+      setContactMessage('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setContactError(error.message || 'Terjadi kesalahan saat mengirim pesan.');
+    } finally {
+      setContactLoading(false);
+    }
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -71,9 +179,17 @@ const HomePage = () => {
     }
   };
 
-  // ✅ Sekarang menerima ref dari luar
-  const renderProgramSection = (type, carouselRef) => {
-    const filteredPrograms = programs.filter(p => p.type === type);
+  const handleNextClick = (type, carouselRef) => {
+    scrollContainer(carouselRef, 'right');
+    const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+    if (scrollLeft + clientWidth >= scrollWidth - 50) {
+      fetchMorePrograms(type);
+    }
+  };
+
+  const renderProgramSection = (type, carouselRef, programList) => {
+    if (loading) return <p>Loading programs...</p>;
+    if (error) return <p>Error fetching programs: {error}</p>;
 
     return (
       <div className="program-type-section">
@@ -82,9 +198,9 @@ const HomePage = () => {
         <div className="carousel-wrapper">
           <button className="carousel-arrow left" onClick={() => scrollContainer(carouselRef, 'left')}>&#8249;</button>
           <div className="carousel-scroll" ref={carouselRef}>
-            {filteredPrograms.map((program, idx) => (
+            {programList.map((program) => (
               <div
-                key={idx}
+                key={program.id}
                 className="carousel-card enhanced-card"
                 onClick={handleCardClick}
                 role="button"
@@ -93,13 +209,14 @@ const HomePage = () => {
               >
                 <div className="card-content">
                   <h4 className="card-title">{program.title}</h4>
-                  <p><strong>Tanggal:</strong> {formatDate(program.date)}</p>
-                  <p><strong>Harga:</strong> {formatHarga(program.harga)}</p>
+                  <p><strong>Tanggal:</strong> {formatDate(program.availableDate)}</p>
+                  <p><strong>Harga:</strong> {formatHarga(program.priceIdr)}</p>
                 </div>
               </div>
             ))}
+            {loadingMore[type] && <p>Loading more...</p>}
           </div>
-          <button className="carousel-arrow right" onClick={() => scrollContainer(carouselRef, 'right')}>&#8250;</button>
+          <button className="carousel-arrow right" onClick={() => handleNextClick(type, carouselRef)}>&#8250;</button>
         </div>
       </div>
     );
@@ -142,21 +259,46 @@ const HomePage = () => {
 
       <section className="carousel-section" ref={programRef}>
         <h2>Program Unggulan</h2>
-        {renderProgramSection('Course', courseRef)}
-        {renderProgramSection('Workshop', workshopRef)}
-        {renderProgramSection('Seminar', seminarRef)}
-        {renderProgramSection('Competition', competitionRef)}
+        {renderProgramSection('Course', courseRef, courses)}
+        {renderProgramSection('Workshop', workshopRef, workshops)}
+        {renderProgramSection('Seminar', seminarRef, seminars)}
+        {renderProgramSection('Competition', competitionRef, competitions)}
       </section>
 
       <section className="contact-section" ref={contactRef}>
         <h2>Hubungi Kami</h2>
         <p>Kami siap membantu kamu. Silakan hubungi kami melalui form di bawah ini atau kontak langsung!</p>
-        <div className="contact-form">
-          <input type="text" placeholder="Nama Lengkap" />
-          <input type="email" placeholder="Email" />
-          <textarea placeholder="Pesan Anda" rows="4" />
-          <button className="submit-btn">Kirim Pesan</button>
-        </div>
+        <form className="contact-form" onSubmit={handleContactSubmit}>
+          <input 
+            type="text" 
+            placeholder="Nama Lengkap" 
+            value={contactFullName}
+            onChange={(e) => setContactFullName(e.target.value)}
+            required
+            disabled={contactLoading}
+          />
+          <input 
+            type="email" 
+            placeholder="Email" 
+            value={contactEmail}
+            onChange={(e) => setContactEmail(e.target.value)}
+            required
+            disabled={contactLoading}
+          />
+          <textarea 
+            placeholder="Pesan Anda" 
+            rows="4" 
+            value={contactMessage}
+            onChange={(e) => setContactMessage(e.target.value)}
+            required
+            disabled={contactLoading}
+          />
+          <button type="submit" className="submit-btn" disabled={contactLoading}>
+            {contactLoading ? 'Mengirim...' : 'Kirim Pesan'}
+          </button>
+          {contactSuccess && <p className="success-message" style={{color: 'green', marginTop: '10px'}}>{contactSuccess}</p>}
+          {contactError && <p className="error-message" style={{color: 'red', marginTop: '10px'}}>{contactError}</p>}
+        </form>
       </section>
 
       <footer className="home-footer">
