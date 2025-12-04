@@ -52,6 +52,13 @@ const HomePage = () => {
     Competition: false,
   });
 
+  const [contactFullName, setContactFullName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactMessage, setContactMessage] = useState('');
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactSuccess, setContactSuccess] = useState('');
+  const [contactError, setContactError] = useState('');
+
   const aboutRef = useRef(null);
   const programRef = useRef(null);
   const contactRef = useRef(null);
@@ -64,7 +71,7 @@ const HomePage = () => {
   const fetchProgramData = async (type, setState, page = 1) => {
     try {
       const lowerCaseType = type.toLowerCase();
-      const response = await fetch(`http://localhost:3000/api/v1/programs?type=${lowerCaseType}&limit=10&page=${page}&sort=availableDate`);
+      const response = await fetch(`${process.env.REACT_APP_API_ENDPOINT}/api/v1/programs?type=${lowerCaseType}&limit=10&page=${page}&sort=availableDate`);
       if (!response.ok) {
         throw new Error(`Failed to fetch ${type}`);
       }
@@ -117,6 +124,43 @@ const HomePage = () => {
     await fetchProgramData(type, setState, next_page);
 
     setLoadingMore(prev => ({ ...prev, [type]: false }));
+  };
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    setContactLoading(true);
+    setContactSuccess('');
+    setContactError('');
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_ENDPOINT}/api/v1/feedbacks`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          fullName: contactFullName, 
+          email: contactEmail, 
+          message: contactMessage 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send message.');
+      }
+
+      setContactSuccess('Pesan Anda berhasil terkirim!');
+      setContactFullName('');
+      setContactEmail('');
+      setContactMessage('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setContactError(error.message || 'Terjadi kesalahan saat mengirim pesan.');
+    } finally {
+      setContactLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -224,12 +268,37 @@ const HomePage = () => {
       <section className="contact-section" ref={contactRef}>
         <h2>Hubungi Kami</h2>
         <p>Kami siap membantu kamu. Silakan hubungi kami melalui form di bawah ini atau kontak langsung!</p>
-        <div className="contact-form">
-          <input type="text" placeholder="Nama Lengkap" />
-          <input type="email" placeholder="Email" />
-          <textarea placeholder="Pesan Anda" rows="4" />
-          <button className="submit-btn">Kirim Pesan</button>
-        </div>
+        <form className="contact-form" onSubmit={handleContactSubmit}>
+          <input 
+            type="text" 
+            placeholder="Nama Lengkap" 
+            value={contactFullName}
+            onChange={(e) => setContactFullName(e.target.value)}
+            required
+            disabled={contactLoading}
+          />
+          <input 
+            type="email" 
+            placeholder="Email" 
+            value={contactEmail}
+            onChange={(e) => setContactEmail(e.target.value)}
+            required
+            disabled={contactLoading}
+          />
+          <textarea 
+            placeholder="Pesan Anda" 
+            rows="4" 
+            value={contactMessage}
+            onChange={(e) => setContactMessage(e.target.value)}
+            required
+            disabled={contactLoading}
+          />
+          <button type="submit" className="submit-btn" disabled={contactLoading}>
+            {contactLoading ? 'Mengirim...' : 'Kirim Pesan'}
+          </button>
+          {contactSuccess && <p className="success-message" style={{color: 'green', marginTop: '10px'}}>{contactSuccess}</p>}
+          {contactError && <p className="error-message" style={{color: 'red', marginTop: '10px'}}>{contactError}</p>}
+        </form>
       </section>
 
       <footer className="home-footer">
