@@ -15,7 +15,7 @@ const PrivateRoute = ({ adminOnly = false }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (adminOnly && user.role !== 'Admin') {
+  if (adminOnly && !user.admin) {
     // Logged in but not an admin, redirect to user dashboard
     return <Navigate to="/dashboard" replace />;
   }

@@ -40,7 +40,7 @@ const Left = () => {
       const user = await login(email, password);
       toast.success('Login berhasil!');
       setTimeout(() => {
-        navigate(user.role === 'Admin' ? '/admin/dashboard' : '/dashboard');
+        navigate(user.admin ? '/admin/dashboard' : '/dashboard');
       }, 1000);
     } catch (error) {
       let errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';

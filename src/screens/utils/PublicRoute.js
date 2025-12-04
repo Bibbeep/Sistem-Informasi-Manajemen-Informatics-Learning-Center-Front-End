@@ -12,7 +12,7 @@ const PublicRoute = () => {
 
   if (user) {
     // User is logged in, redirect to their dashboard
-    const redirectPath = user.role === 'Admin' ? '/admin/dashboard' : '/dashboard';
+    const redirectPath = user.admin ? '/admin/dashboard' : '/dashboard';
     return <Navigate to={redirectPath} replace />;
   }
 
