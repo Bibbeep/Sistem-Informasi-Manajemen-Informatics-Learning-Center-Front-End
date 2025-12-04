@@ -3,48 +3,105 @@ import './materipage.css';
 import Sidebar from '../sidebar/Sidebar';
 import ProfileBar from '../profilebar/ProfileBar';
 import { useNavigate } from 'react-router-dom';
+import api from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
-// Mapping gambar berdasarkan tipe
+// Mapping gambar berdasarkan tipe (for fallback)
 const typeImageMap = {
-  Course: "/images/course.png",
-  Workshop: "/images/workshop.png",
-  Seminar: "/images/seminar.png",
-  Competition: "/images/competition.png"
+  Course: "/images/course_thumb.png",
+  Workshop: "/images/workshop_thumb.png",
+  Seminar: "/images/seminar_thumb.png",
+  Competition: "/images/competition_thumb.png"
 };
 
 const MateriPage = () => {
   const navigate = useNavigate();
-  const [materiList, setMateriList] = useState([]);
+  const { user } = useAuth();
+  const [enrolledPrograms, setEnrolledPrograms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchPrograms = async () => {
+    const fetchEnrolledPrograms = async () => {
+      if (!user || !user.sub) {
+        setLoading(false);
+        setError("User not logged in.");
+        return;
+      }
+
       try {
-        const res = await fetch('http://localhost/react-backend/programs.php');
-        const allPrograms = await res.json();
-
-        const myLearnings = JSON.parse(localStorage.getItem('myLearnings')) || [];
-
-        // Filter program yang sudah dibeli (id ada di myLearnings)
-        const ownedPrograms = allPrograms
-          .filter(p => myLearnings.includes(p.id))
-          .map(p => ({
-            id: p.id,
-            title: p.title,
-            type: p.type,
-            progress: `${Math.floor(Math.random() * 50 + 50)}%`, // Simulasi progress random
-          }));
-
-        setMateriList(ownedPrograms);
+        setLoading(true);
+        const response = await api.get(`/enrollments`, {
+          params: {
+            userId: user.sub,
+            limit: 100, // Fetch a large number of enrolled programs
+          },
+        });
+        setEnrolledPrograms(response.data.data.enrollments);
+        setError(null);
       } catch (err) {
-        console.error('Error fetching programs:', err);
+        setError("Failed to load enrolled programs. Please try again.");
+        console.error("Fetch error:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchPrograms();
-  }, []);
+    fetchEnrolledPrograms();
+  }, [user]);
 
-  const handleLanjutkan = (id) => {
-    navigate(`/materi/detail/${id}`);
+  const handleNavigateToDetail = (programId) => {
+    navigate(`/materi/detail/${programId}`);
+  };
+
+  const getProgramImage = (program) => {
+    return program.programThumbnailUrl || typeImageMap[program.programType] || "/images/default.png";
+  };
+
+  const renderContent = () => {
+    if (loading) {
+      return <p style={{ color: 'white' }}>Loading your programs...</p>;
+    }
+
+    if (error) {
+      return <p style={{ color: 'red' }}>Error: {error}</p>;
+    }
+
+    if (enrolledPrograms.length === 0) {
+      return <p style={{ color: 'white' }}>Anda belum terdaftar di program manapun.</p>;
+    }
+
+    return (
+      <div className="materi-grid">
+        {enrolledPrograms.map(program => (
+          <div className="materi-card" key={program.id} onClick={() => handleNavigateToDetail(program.programId)}>
+            <img
+              src={getProgramImage(program)}
+              alt={program.programTitle}
+              className="materi-image"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = typeImageMap[program.programType] || "/images/default.png";
+              }}
+            />
+            <div className="materi-content">
+              <h3>{program.programTitle}</h3>
+              <p>Jenis: {program.programType}</p>
+              <div className="progress-bar-container">
+                <div 
+                  className="progress-bar" 
+                  style={{ width: `${parseFloat(program.progressPercentage).toFixed(0)}%` }}
+                ></div>
+              </div>
+              <p>Progress: {parseFloat(program.progressPercentage).toFixed(0)}%</p>
+              <button className="open-button">
+                Continue
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -52,30 +109,8 @@ const MateriPage = () => {
       <Sidebar />
       <div className="materi-main">
         <div className="materi-container">
-          <h2 className="materi-title">Materi Saya</h2>
-          <div className="materi-grid">
-            {materiList.length > 0 ? (
-              materiList.map(materi => (
-                <div className="materi-card" key={materi.id}>
-                  <img
-                    src={typeImageMap[materi.type] || "/images/default.png"}
-                    alt={materi.title}
-                    className="materi-image"
-                  />
-                  <div className="materi-content">
-                    <h3>{materi.title}</h3>
-                    <p>Jenis: {materi.type}</p>
-                    <p>Progress: {materi.progress}</p>
-                    <button className="open-button" onClick={() => handleLanjutkan(materi.id)}>
-                      Continue
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p style={{ color: 'white' }}>Belum ada materi yang kamu miliki.</p>
-            )}
-          </div>
+          <h2 className="materi-title">My Learnings</h2>
+          {renderContent()}
         </div>
       </div>
       <ProfileBar />
@@ -84,83 +119,3 @@ const MateriPage = () => {
 };
 
 export default MateriPage;
-
-
-// import React, { useEffect, useState } from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import Sidebar from '../sidebar/Sidebar';
-// import ProfileBar from '../profilebar/ProfileBar';
-// import CourseCard from '../dashboard/components/CourseCards'; // import CourseCard
-// import './materipage.css';
-
-// const formatDate = (dateStr) => {
-//   const date = new Date(dateStr);
-//   return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-// };
-
-// const MateriPage = () => {
-//   const navigate = useNavigate();
-//   const [myPrograms, setMyPrograms] = useState([]);
-//   const [loading, setLoading] = useState(true);
-
-//   useEffect(() => {
-//     const fetchPrograms = async () => {
-//       try {
-//         const res = await fetch('http://localhost/react-backend/programs.php');
-//         const allPrograms = await res.json();
-
-//         // Ambil id program dari localStorage myLearnings (array id)
-//         const storedMyLearnings = localStorage.getItem('myLearnings');
-//         const myLearningsIds = storedMyLearnings ? JSON.parse(storedMyLearnings) : [];
-
-//         // Filter program yang ada di myLearnings id
-//         const ownedPrograms = allPrograms
-//           .filter(p => myLearningsIds.includes(p.id))
-//           .map(p => ({
-//             ...p,
-//             date: formatDate(p.date),
-//           }));
-
-//         setMyPrograms(ownedPrograms);
-//       } catch (error) {
-//         console.error('Gagal fetch programs:', error);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchPrograms();
-//   }, []);
-
-//   const handleLanjutkan = (id) => {
-//     navigate(`/materi/detail/${id}`);
-//   };
-
-//   if (loading) return <p style={{ color: 'white' }}>Loading materi...</p>;
-
-//   return (
-//     <div className="materi-layout">
-//       <Sidebar />
-//       <div className="materi-main">
-//         <div className="materi-container">
-//           <h2 className="materi-title">Materi Saya</h2>
-//           <div className="materi-grid">
-//             {myPrograms.length > 0 ? (
-//               myPrograms.map(prog => (
-//                 <div key={prog.id} onClick={() => handleLanjutkan(prog.id)}>
-//                   <CourseCard {...prog} />
-//                 </div>
-//               ))
-//             ) : (
-//               <p style={{ color: 'white' }}>Belum ada materi yang kamu miliki.</p>
-//             )}
-//           </div>
-//         </div>
-//       </div>
-//       <ProfileBar />
-//     </div>
-//   );
-// };
-
-// export default MateriPage;
-
