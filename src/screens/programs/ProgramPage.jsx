@@ -7,6 +7,7 @@ import CourseCard from './components/CourseCard';
 import Filter from './components/Filter';
 import api from '../../services/api';
 import useDebounce from '../../hooks/useDebounce';
+import { useAuth } from '../../context/AuthContext'; // Import useAuth
 import './course.css';
 
 const formatRupiah = (angka) => {
@@ -42,7 +43,11 @@ const ProgramPage = () => {
   const [sortOption, setSortOption] = useState('id');
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [modalImgSrc, setModalImgSrc] = useState('');
+  const [enrolledProgramIds, setEnrolledProgramIds] = useState(new Set());
+  const [enrolledProgramsData, setEnrolledProgramsData] = useState([]);
+
   const navigate = useNavigate();
+  const { user } = useAuth(); // Get user from AuthContext
 
   const debouncedSearchKeyword = useDebounce(searchKeyword, 500);
   const debouncedMinPrice = useDebounce(minPrice, 500);
@@ -53,6 +58,30 @@ const ProgramPage = () => {
       setModalImgSrc(selectedProgram.thumbnailUrl);
     }
   }, [selectedProgram]);
+
+  // Fetch enrolled programs
+  useEffect(() => {
+    const fetchEnrolledPrograms = async () => {
+      if (!user || !user.sub) {
+        setEnrolledProgramIds(new Set());
+        setEnrolledProgramsData([]);
+        return;
+      }
+      try {
+        const response = await api.get('/enrollments', {
+          params: { userId: user.sub, limit: 100 }, // Fetch all for now
+        });
+        const enrolled = response.data.data.enrollments;
+        setEnrolledProgramsData(enrolled);
+        setEnrolledProgramIds(new Set(enrolled.map(p => p.programId)));
+      } catch (err) {
+        console.error('Failed to fetch enrolled programs:', err);
+        setEnrolledProgramIds(new Set());
+        setEnrolledProgramsData([]);
+      }
+    };
+    fetchEnrolledPrograms();
+  }, [user]); // Refetch when user changes
 
   const fetchPrograms = async (currentPage, filter, isSearchOrFilterChange = false) => {
     setLoading(true);
@@ -113,7 +142,15 @@ const ProgramPage = () => {
   const handleJoinProgram = (program) => {
     localStorage.setItem('selectedProgram', JSON.stringify(program));
     navigate('/payment');
-  };
+  }
+
+  const handleContinueProgram = (programId) => {
+    navigate(`/materi/detail/${programId}`);
+  }
+
+  const isProgramEnrolled = selectedProgram && enrolledProgramIds.has(selectedProgram.id);
+  const enrolledProgram = isProgramEnrolled ? enrolledProgramsData.find(ep => ep.programId === selectedProgram.id) : null;
+
 
   return (
     <div className="course-container">
@@ -178,6 +215,7 @@ const ProgramPage = () => {
               date={program.availableDate}
               price={program.priceIdr}
               description={program.description}
+              isEnrolled={enrolledProgramIds.has(program.id)} // Pass enrollment status
               onClick={() => setSelectedProgram(program)}
             />
           ))}
@@ -211,14 +249,30 @@ const ProgramPage = () => {
             <p><strong>Tanggal:</strong> {formatDate(selectedProgram.availableDate)}</p>
             <p><strong>Harga:</strong> {formatRupiah(selectedProgram.priceIdr)}</p>
             <p><strong>Jenis:</strong> {selectedProgram.type || '-'} </p>
-            <div className="modal-buttons">
-              <button className="pay" onClick={() => handleJoinProgram(selectedProgram)}>
-                Join
-              </button>
-              <button className="close" onClick={() => setSelectedProgram(null)}>
-                Close
-              </button>
-            </div>
+            
+            {isProgramEnrolled && enrolledProgram ? (
+              <>
+                <p><strong>Status:</strong> Enrolled</p>
+                <p><strong>Progress:</strong> {parseFloat(enrolledProgram.progressPercentage).toFixed(0)}%</p>
+                <div className="modal-buttons">
+                  <button className="pay" onClick={() => handleContinueProgram(selectedProgram.id)}>
+                    Continue
+                  </button>
+                  <button className="close" onClick={() => setSelectedProgram(null)}>
+                    Close
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="modal-buttons">
+                <button className="pay" onClick={() => handleJoinProgram(selectedProgram)}>
+                  Join
+                </button>
+                <button className="close" onClick={() => setSelectedProgram(null)}>
+                  Close
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

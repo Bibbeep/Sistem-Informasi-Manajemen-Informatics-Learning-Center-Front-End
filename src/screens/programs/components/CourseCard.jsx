@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FaCheckCircle } from 'react-icons/fa'; // Import the checkmark icon
 import './coursecard.css';
 
 // Format Rupiah
@@ -23,7 +24,7 @@ const typeImageMap = {
   Workshop: "/images/workshop_thumb.png",
 };
 
-const CourseCard = ({ title, type, image, date, price, description, onClick }) => {
+const CourseCard = ({ title, type, image, date, price, description, onClick, isEnrolled }) => {
   const [imgSrc, setImgSrc] = useState(image);
 
   useEffect(() => {
@@ -46,7 +47,9 @@ const CourseCard = ({ title, type, image, date, price, description, onClick }) =
         onError={handleImageError}
       />
       <div className="course-info">
-        <h3 className="course-title">{title}</h3>
+        <h3 className="course-title">
+          {title} {isEnrolled && <FaCheckCircle className="enrolled-icon" />}
+        </h3>
         <p className="course-description">
           <span>{description || '-'}</span>
         </p>

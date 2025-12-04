@@ -179,3 +179,11 @@
     transform: translateY(0);
   }
 }
+
+.enrolled-icon {
+  color: #22c55e; /* green-500 */
+  margin-left: 8px;
+  font-size: 1.1em;
+  vertical-align: middle;
+}
+
