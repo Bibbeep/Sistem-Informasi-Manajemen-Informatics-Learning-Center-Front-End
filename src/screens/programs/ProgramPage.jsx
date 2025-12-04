@@ -9,13 +9,11 @@ import api from '../../services/api';
 import useDebounce from '../../hooks/useDebounce';
 import './course.css';
 
-// Format Rupiah
 const formatRupiah = (angka) => {
   if (angka === null || angka === undefined || Number(angka) === 0) return 'Gratis';
   return 'Rp. ' + Number(angka).toLocaleString('id-ID');
 };
 
-// Format tanggal: 27 Mei 2025
 const formatDate = (dateStr) => {
   if (!dateStr) return '-';
   const date = new Date(dateStr);
@@ -38,11 +36,17 @@ const ProgramPage = () => {
   const [hasMore, setHasMore] = useState(true);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('All');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [showAvailableOnly, setShowAvailableOnly] = useState(false);
+  const [sortOption, setSortOption] = useState('id');
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [modalImgSrc, setModalImgSrc] = useState('');
   const navigate = useNavigate();
 
-  const debouncedSearchKeyword = useDebounce(searchKeyword, 500); // 500ms delay
+  const debouncedSearchKeyword = useDebounce(searchKeyword, 500);
+  const debouncedMinPrice = useDebounce(minPrice, 500);
+  const debouncedMaxPrice = useDebounce(maxPrice, 500);
 
   useEffect(() => {
     if (selectedProgram) {
@@ -53,13 +57,19 @@ const ProgramPage = () => {
   const fetchPrograms = async (currentPage, filter, isSearchOrFilterChange = false) => {
     setLoading(true);
     try {
+      const params = {
+        type: filter === 'All' ? 'all' : filter.toLowerCase(),
+        limit: 10,
+        page: currentPage,
+        title: debouncedSearchKeyword || undefined,
+        'price.gte': debouncedMinPrice || undefined,
+        'price.lte': debouncedMaxPrice || undefined,
+        isAvailable: showAvailableOnly ? true : undefined,
+        sort: sortOption,
+      };
+
       const response = await api.get('/programs', {
-        params: {
-          type: filter === 'All' ? 'all' : filter.toLowerCase(),
-          limit: 10,
-          page: currentPage,
-          title: debouncedSearchKeyword ? debouncedSearchKeyword : undefined,
-        },
+        params,
         paramsSerializer: params => {
           return Object.entries(params)
             .map(([key, value]) => (value !== undefined && value !== null) ? `${encodeURIComponent(key)}=${encodeURIComponent(value)}` : null)
@@ -69,7 +79,6 @@ const ProgramPage = () => {
       });
       
       const { data, pagination } = response.data;
-
       setPrograms(prev => isSearchOrFilterChange ? data.programs : [...prev, ...data.programs]);
       setHasMore(pagination.currentPage < pagination.totalPages);
       setError(null);
@@ -85,7 +94,7 @@ const ProgramPage = () => {
     setPrograms([]);
     setPage(1);
     fetchPrograms(1, selectedFilter, true);
-  }, [debouncedSearchKeyword, selectedFilter]);
+  }, [debouncedSearchKeyword, selectedFilter, debouncedMinPrice, debouncedMaxPrice, showAvailableOnly, sortOption]);
 
   const handleLoadMore = () => {
     const nextPage = page + 1;
@@ -104,7 +113,7 @@ const ProgramPage = () => {
   const handleJoinProgram = (program) => {
     localStorage.setItem('selectedProgram', JSON.stringify(program));
     navigate('/payment');
-  }
+  };
 
   return (
     <div className="course-container">
@@ -112,6 +121,48 @@ const ProgramPage = () => {
       <div className="course-content">
         <DashboardHeader onSearch={handleSearch} />
         
+        <div className="program-filters">
+          <div className="filter-group">
+            <label htmlFor="minPrice">Min Price:</label>
+            <input
+              type="number"
+              id="minPrice"
+              value={minPrice}
+              onChange={(e) => setMinPrice(e.target.value)}
+              placeholder="e.g. 50000"
+            />
+          </div>
+          <div className="filter-group">
+            <label htmlFor="maxPrice">Max Price:</label>
+            <input
+              type="number"
+              id="maxPrice"
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(e.target.value)}
+              placeholder="e.g. 300000"
+            />
+          </div>
+          <div className="filter-group checkbox-group">
+            <input
+              type="checkbox"
+              id="showAvailableOnly"
+              checked={showAvailableOnly}
+              onChange={(e) => setShowAvailableOnly(e.target.checked)}
+            />
+            <label htmlFor="showAvailableOnly">Available Only</label>
+          </div>
+          <div className="filter-group">
+            <label htmlFor="sortOption">Sort By:</label>
+            <select id="sortOption" value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
+              <option value="id">Default</option>
+              <option value="price">Price (Low to High)</option>
+              <option value="-price">Price (High to Low)</option>
+              <option value="availableDate">Date (Oldest)</option>
+              <option value="-availableDate">Date (Newest)</option>
+            </select>
+          </div>
+        </div>
+
         <Filter selected={selectedFilter} onSelect={handleFilterSelect} />
         
         {error && <p className="error-message">{error}</p>}
@@ -157,20 +208,11 @@ const ProgramPage = () => {
             />
             <h3>{selectedProgram.title}</h3>
             <p>{selectedProgram.description || '-'}</p>
-            <p>
-              <strong>Tanggal:</strong> {formatDate(selectedProgram.availableDate)}
-            </p>
-            <p>
-              <strong>Harga:</strong> {formatRupiah(selectedProgram.priceIdr)}
-            </p>
-            <p>
-              <strong>Jenis:</strong> {selectedProgram.type || '-'}
-            </p>
+            <p><strong>Tanggal:</strong> {formatDate(selectedProgram.availableDate)}</p>
+            <p><strong>Harga:</strong> {formatRupiah(selectedProgram.priceIdr)}</p>
+            <p><strong>Jenis:</strong> {selectedProgram.type || '-'} </p>
             <div className="modal-buttons">
-              <button
-                className="pay"
-                onClick={() => handleJoinProgram(selectedProgram)}
-              >
+              <button className="pay" onClick={() => handleJoinProgram(selectedProgram)}>
                 Join
               </button>
               <button className="close" onClick={() => setSelectedProgram(null)}>
