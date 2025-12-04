@@ -63,7 +63,16 @@ const ResetPasswordForm = () => {
       }, 3000);
 
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Reset password gagal. Token mungkin tidak valid atau telah kedaluwarsa.';
+      let errorMessage = 'Reset password gagal. Silakan coba lagi.';
+      if (err.response) {
+        if (err.response.status === 400 && err.response.data?.errors?.length > 0) {
+          errorMessage = err.response.data.errors.map(e => e.message).join('; ');
+        } else {
+          errorMessage = err.response.data?.message || 'Token mungkin tidak valid atau telah kedaluwarsa.';
+        }
+      } else if (err.request) {
+        errorMessage = 'Tidak dapat terhubung ke server.';
+      }
       toast.error(errorMessage);
     } finally {
       setLoading(false);
