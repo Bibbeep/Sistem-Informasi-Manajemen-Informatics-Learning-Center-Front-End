@@ -1,63 +1,75 @@
 import React, { useEffect, useState } from 'react';
 import './coursecards.css';
 import { useNavigate } from 'react-router-dom';
+import api from '../../../services/api';
+import { useAuth } from '../../../context/AuthContext';
 
 const CourseCards = () => {
   const navigate = useNavigate();
-  const [courses, setCourses] = useState([]);
+  const { user } = useAuth();
+  const [enrolledPrograms, setEnrolledPrograms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('programs');
-    if (saved) {
-      let parsed = JSON.parse(saved);
-
-      let updated = false;
-      parsed = parsed.map(item => {
-        if (item.progress === undefined) {
-          updated = true;
-          return { ...item, progress: Math.floor(Math.random() * 101) };
-        }
-        return item;
-      });
-
-      if (updated) {
-        localStorage.setItem('programs', JSON.stringify(parsed));
+    const fetchEnrolledPrograms = async () => {
+      if (!user || !user.sub) {
+        setLoading(false);
+        setError("User not logged in.");
+        return;
       }
 
-      if (parsed.length > 0 && parsed[0].date) {
-        parsed = parsed.sort((a, b) => new Date(b.date) - new Date(a.date));
+      try {
+        const response = await api.get('/enrollments', {
+          params: { userId: user.sub, limit: 5, sort: '-updatedAt' }, // Fetch top 5 recently updated
+        });
+        setEnrolledPrograms(response.data.data.enrollments);
+        setError(null);
+      } catch (err) {
+        setError("Failed to load enrolled programs.");
+        console.error("Fetch error:", err);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setCourses(parsed.slice(0, 2));
-    }
-  }, []);
+    fetchEnrolledPrograms();
+  }, [user]);
 
-  const handleCardClick = (id) => {
-    navigate(`/materi/detail/${id}`);
+  const handleCardClick = (programId) => {
+    navigate(`/materi/detail/${programId}`);
   };
 
-  if (courses.length === 0) {
+  if (loading) {
+    return <div className="course-cards"><p>Loading enrolled programs...</p></div>;
+  }
+
+  if (error) {
+    return <div className="course-cards"><p style={{ color: 'red' }}>Error: {error}</p></div>;
+  }
+
+  if (enrolledPrograms.length === 0) {
     return <div className="course-cards"><p>Tidak ada materi terbaru.</p></div>;
   }
 
   return (
     <div className="course-cards">
       <div className="cards-container">
-        {courses.map(course => (
+        {enrolledPrograms.map(program => (
           <div
-            key={course.id}
+            key={program.id}
             className="card"
-            onClick={() => handleCardClick(course.id)}
+            onClick={() => handleCardClick(program.programId)}
             style={{ cursor: 'pointer' }}
           >
-            <h3>{course.title}</h3>
-            <div className="progress-bar">
+            <h3>{program.programTitle}</h3>
+            <div className="progress-bar-container">
               <div
                 className="progress-fill"
-                style={{ width: `${course.progress}%` }}
+                style={{ width: `${parseFloat(program.progressPercentage).toFixed(0)}%` }}
               ></div>
             </div>
-            <p>{course.progress}%</p>
+            <p>{parseFloat(program.progressPercentage).toFixed(0)}%</p>
           </div>
         ))}
       </div>
