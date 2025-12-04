@@ -22,6 +22,18 @@ const CertificateThumbnail = ({ src, alt }) => {
 
 const CertificateBox = ({ certificates, loading, error }) => {
   const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
+  const [selectedCert, setSelectedCert] = useState(null);
+
+  const handleCardClick = (cert) => {
+    setSelectedCert(cert);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedCert(null);
+  };
 
   if (loading) {
     return (
@@ -48,26 +60,53 @@ const CertificateBox = ({ certificates, loading, error }) => {
   }
 
   return (
-    <div className="certificate-box" onClick={() => navigate('/certificates')}>
-      <div className="certificate-box-content">
-        <h3>My Certificates</h3>
-        <div className="certificate-card-preview-container">
-          {certificates.length > 0 ? (
-            certificates.map(cert => (
-              <div className="certificate-card-preview" key={cert.id}>
-                <CertificateThumbnail src={cert.programThumbnailUrl} alt={cert.title} />
-                <div className="certificate-card-preview-text">
-                  <span>{cert.title}</span>
+    <>
+      <div className="certificate-box" onClick={() => navigate('/certificates')}>
+        <div className="certificate-box-content">
+          <h3>My Certificates</h3>
+          <div className="certificate-card-preview-container">
+            {certificates.length > 0 ? (
+              certificates.map(cert => (
+                <div 
+                  className="certificate-card-preview" 
+                  key={cert.id} 
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent navigating to /certificates
+                    handleCardClick(cert);
+                  }}
+                >
+                  <CertificateThumbnail src={cert.programThumbnailUrl} alt={cert.title} />
+                  <div className="certificate-card-preview-text">
+                    <span>{cert.title}</span>
+                  </div>
                 </div>
-              </div>
-            ))
-          ) : (
-            <p>No certificates found.</p>
-          )}
+              ))
+            ) : (
+              <p>No certificates found.</p>
+            )}
+          </div>
         </div>
+        <div className="certificate-box-icon">🎓</div>
       </div>
-      <div className="certificate-box-icon">🎓</div>
-    </div>
+
+      {showModal && selectedCert && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <h3>{selectedCert.title}</h3>
+            {selectedCert.documentUrl ? (
+              <iframe src={selectedCert.documentUrl} width="100%" height="100%" style={{border: 'none'}} title={selectedCert.title}></iframe>
+            ) : (
+              <p>No document available for this certificate.</p>
+            )}
+            <div className="modal-buttons" style={{justifyContent: 'center'}}>
+              <button className="close" onClick={closeModal}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

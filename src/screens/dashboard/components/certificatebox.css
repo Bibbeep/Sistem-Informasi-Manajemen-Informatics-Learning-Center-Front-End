@@ -81,3 +81,94 @@
   text-overflow: ellipsis;
   max-width: 140px;
 }
+
+/* Modal Styles (replicated from course.css) */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(30, 41, 59, 0.5); /* dark transparent */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  backdrop-filter: blur(4px);
+}
+
+.modal-box {
+  background-color: #ffffff;
+  padding: 24px;
+  border-radius: 16px;
+  max-width: 90vw; /* Almost full screen width */
+  max-height: 90vh; /* Almost full screen height */
+  width: auto; /* Allow width to adjust */
+  height: auto; /* Allow height to adjust */
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  animation: fadeInUp 0.3s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Ensure content like iframe doesn't overflow */
+}
+
+.modal-box h3 {
+  margin-top: 0;
+  font-size: 22px;
+  color: #1f2937;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.modal-box p {
+  font-size: 14px;
+  color: #374151;
+  margin-bottom: 10px;
+}
+
+.modal-box iframe {
+  flex-grow: 1; /* Allow iframe to take up available height */
+  min-height: 400px;
+  height: 100%; /* Ensure iframe fills available vertical space */
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.modal-box button {
+  padding: 10px 16px;
+  font-size: 14px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.modal-box button.close {
+  background-color: #ef4444;
+  color: white;
+}
+
+.modal-box button.close:hover {
+  background-color: #dc2626;
+  transform: scale(1.05);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
