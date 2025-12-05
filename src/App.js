@@ -7,6 +7,7 @@ import ProgramPage from "./screens/programs/ProgramPage";
 import MateriPage from "./screens/materi/MateriPage";
 import MateriDetailPage from "./screens/materi/components/MateriDetailPage";
 import Forum from "./screens/forum/Forum";
+import ForumDetailPage from './screens/forum/ForumDetailPage'; // New import
 import Payment from "./screens/payment/Payment";
 import InvoiceDetailPage from "./screens/payment/InvoiceDetailPage";
 import Contact from "./screens/contact/ContactUs";
@@ -49,6 +50,7 @@ function App() {
           <Route path="/materi/detail/:id" element={<MateriDetailPage />} />
           <Route path="/programs/competition" element={<ProgramPage />} />
           <Route path="/forum" element={<Forum />} />
+          <Route path="/forum/:id" element={<ForumDetailPage />} />
           <Route path="/payment" element={<Payment />} />
           <Route path="/payment/invoice/:id" element={<InvoiceDetailPage />} />
           <Route path="/contact" element={<Contact />} />

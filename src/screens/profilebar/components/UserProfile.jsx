@@ -20,7 +20,6 @@ import { FaEdit } from 'react-icons/fa';
 
   // Initialize edit form fields when profile data becomes available or changes
   useEffect(() => {
-    console.log("UserProfile useEffect - profile changed:", profile); // DEBUG
     if (profile) {
       setEditFullName(profile.fullName);
       setEditEmail(profile.email);
@@ -54,7 +53,7 @@ import { FaEdit } from 'react-icons/fa';
       if (editPicture) {
         const formData = new FormData();
         formData.append('photo', editPicture);
-        const response = await api.put(`/users/${user.sub}/profilePhotos`, formData, {
+        await api.put(`/users/${user.sub}/profilePhotos`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
@@ -94,7 +93,6 @@ import { FaEdit } from 'react-icons/fa';
     }
   }
 
-  console.log("UserProfile render - authLoading:", authLoading, "profile:", profile, "user:", user); // DEBUG
   // Use authLoading directly, no need for local loading state
   if (authLoading || !profile) { // If auth is loading or profile not yet loaded from context
     return <div className="user-profile"><p>Loading profile...</p></div>;
