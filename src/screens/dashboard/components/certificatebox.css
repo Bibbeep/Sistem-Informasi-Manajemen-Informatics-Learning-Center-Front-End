@@ -101,16 +101,24 @@
   background-color: #ffffff;
   padding: 24px;
   border-radius: 16px;
-  max-width: 90vw; /* Almost full screen width */
-  max-height: 90vh; /* Almost full screen height */
-  width: auto; /* Allow width to adjust */
-  height: auto; /* Allow height to adjust */
+  max-width: 90vw; /* Default max-width for most modals */
+  max-height: 90vh; /* Default max-height */
+  width: auto;
+  height: auto;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
   animation: fadeInUp 0.3s ease;
   position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden; /* Ensure content like iframe doesn't overflow */
+}
+
+/* Specific styles for the certificate modal to make it wide */
+.certificate-modal-box {
+  width: 95vw;
+  max-width: 1200px; /* A generous max-width for wide screens */
+  height: auto; /* Let content and aspect ratio determine height */
+  aspect-ratio: 16 / 9; /* Enforce a widescreen shape */
 }
 
 .modal-box h3 {

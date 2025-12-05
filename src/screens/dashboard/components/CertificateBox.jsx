@@ -91,7 +91,7 @@ const CertificateBox = ({ certificates, loading, error }) => {
 
       {showModal && selectedCert && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-box certificate-modal-box" onClick={(e) => e.stopPropagation()}>
             <h3>{selectedCert.title}</h3>
             {selectedCert.documentUrl ? (
               <iframe src={selectedCert.documentUrl} width="100%" height="100%" style={{border: 'none'}} title={selectedCert.title}></iframe>
