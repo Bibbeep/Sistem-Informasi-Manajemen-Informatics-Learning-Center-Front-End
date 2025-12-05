@@ -522,3 +522,37 @@
   border: 1px solid #ccc;
   border-radius: 4px;
 }
+
+/* Styles for filter and pagination controls in admin pages */
+.admin-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  gap: 10px;
+}
+
+.admin-pagination button {
+  background-color: #4d9ef7;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+.admin-pagination button:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.admin-pagination button:disabled {
+  background-color: #a0c3e6;
+  cursor: not-allowed;
+}
+
+.admin-pagination span {
+  font-weight: 600;
+}
+
