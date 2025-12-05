@@ -159,7 +159,7 @@ const ProgramPage = () => {
   };
   
   const handleJoinProgram = (program) => {
-    localStorage.setItem('selectedProgram', JSON.stringify(program));
+    localStorage.setItem('selectedProgramIdForModal', program.id);
     navigate('/payment');
   }
 
@@ -170,6 +170,8 @@ const ProgramPage = () => {
   const isProgramEnrolled = selectedProgram && enrolledProgramIds.has(selectedProgram.id);
   const enrolledProgram = isProgramEnrolled ? enrolledProgramsData.find(ep => ep.programId === selectedProgram.id) : null;
 
+  // Check if program is available (availableDate is in the past or today)
+  const isProgramAvailable = selectedProgram && new Date(selectedProgram.availableDate) <= new Date();
 
   return (
     <div className="course-container">
@@ -283,10 +285,18 @@ const ProgramPage = () => {
                 </div>
               </>
             ) : (
-              <div className="modal-buttons">
-                <button className="pay" onClick={() => handleJoinProgram(selectedProgram)}>
-                  Join
-                </button>
+              <div className="modal-buttons-column"> {/* Use a column layout for message and button */}
+                {user ? (
+                  isProgramAvailable ? (
+                    <button className="pay" onClick={() => handleJoinProgram(selectedProgram)}>
+                      Join
+                    </button>
+                  ) : (
+                    <p className="program-unavailable-message">Program belum tersedia.</p>
+                  )
+                ) : (
+                  <p className="program-unavailable-message">Silakan login untuk bergabung.</p>
+                )}
                 <button className="close" onClick={() => setSelectedProgram(null)}>
                   Close
                 </button>

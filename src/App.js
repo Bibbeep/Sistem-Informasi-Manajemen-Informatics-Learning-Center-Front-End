@@ -8,6 +8,7 @@ import MateriPage from "./screens/materi/MateriPage";
 import MateriDetailPage from "./screens/materi/components/MateriDetailPage";
 import Forum from "./screens/forum/Forum";
 import Payment from "./screens/payment/Payment";
+import InvoiceDetailPage from "./screens/payment/InvoiceDetailPage";
 import Contact from "./screens/contact/ContactUs";
 import Certificate from "./screens/certificates/CertificatesPage";
 import AdminDashboard from './admin/AdminDashboard';
@@ -49,6 +50,7 @@ function App() {
           <Route path="/programs/competition" element={<ProgramPage />} />
           <Route path="/forum" element={<Forum />} />
           <Route path="/payment" element={<Payment />} />
+          <Route path="/payment/invoice/:id" element={<InvoiceDetailPage />} />
           <Route path="/contact" element={<Contact />} />
         </Route>
         

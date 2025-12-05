@@ -161,3 +161,51 @@
 .history-table td strong {
   color: #0d3b66;
 }
+
+/* Payment Instructions */
+.payment-instructions {
+  margin-top: 25px;
+  margin-bottom: 25px;
+  background-color: #f8fbfd;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 15px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.payment-instructions strong {
+  color: #1f2937;
+}
+
+.payment-instructions ol {
+  padding-left: 20px;
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+.payment-instructions li {
+  margin-bottom: 5px;
+}
+
+.pay-button:disabled {
+  background-color: #a0c3e6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+
+/* Styling for 'Kembali' button in detail modal */
+.close-detail-button {
+    background-color: #6c757d !important; /* Muted color */
+    margin-top: 10px;
+    width: 100%;
+}
+
+.close-detail-button:hover {
+    background-color: #5a6268 !important; /* Darker on hover */
+    transform: scale(1.03); /* Slightly less pronounced hover effect */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+

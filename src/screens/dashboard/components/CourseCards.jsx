@@ -21,9 +21,13 @@ const CourseCards = () => {
 
       try {
         const response = await api.get('/enrollments', {
-          params: { userId: user.sub, limit: 5, sort: '-updatedAt' }, // Fetch top 5 recently updated
+          params: { userId: user.sub, limit: 100, sort: '-updatedAt', status: 'all' }, // Fetch top 5 recently updated
         });
-        setEnrolledPrograms(response.data.data.enrollments);
+        const allEnrolled = response.data.data.enrollments;
+        const filteredEnrolled = allEnrolled.filter(enrollment => 
+          enrollment.status.toLowerCase() === 'in progress' || enrollment.status.toLowerCase() === 'completed'
+        );
+        setEnrolledPrograms(filteredEnrolled);
         setError(null);
       } catch (err) {
         setError("Failed to load enrolled programs.");

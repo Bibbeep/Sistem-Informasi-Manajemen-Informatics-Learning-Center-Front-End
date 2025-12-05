@@ -35,9 +35,14 @@ const MateriPage = () => {
           params: {
             userId: user.sub,
             limit: 100, // Fetch a large number of enrolled programs
+            status: 'all', // Fetch all statuses to filter locally
           },
         });
-        setEnrolledPrograms(response.data.data.enrollments);
+        const allEnrolled = response.data.data.enrollments;
+        const filteredEnrolled = allEnrolled.filter(enrollment => 
+          enrollment.status.toLowerCase() === 'in progress' || enrollment.status.toLowerCase() === 'completed'
+        );
+        setEnrolledPrograms(filteredEnrolled);
         setError(null);
       } catch (err) {
         setError("Failed to load enrolled programs. Please try again.");
