@@ -1,8 +1,8 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
 import {
   FaHome, FaBook, FaComments,
-  FaMoneyBill, FaSignOutAlt
+  FaMoneyBill, FaSignOutAlt, FaFolderOpen, FaCertificate // Added FaCertificate
 } from 'react-icons/fa';
 import './sidebar.css';
 import { useAuth } from '../../context/AuthContext';
@@ -18,14 +18,19 @@ const Sidebar = () => {
 
   return (
     <div className="sidebar">
-      <div className="sidebar-logo">
-        <img src="/images/logo.png" alt="ILC Logo" className="sidebar-logo-img" />
-      </div>
+      <Link to="/" className="sidebar-logo-link">
+        <div className="sidebar-logo">
+          <img src="/images/logo.png" alt="ILC Logo" className="sidebar-logo-img" />
+        </div>
+      </Link>
 
       <nav className="sidebar-nav">
         <div className="sidebar-main-links">
           <NavLink to="/dashboard" className="nav-item" activeclassname="active">
             <FaHome /> Dashboard
+          </NavLink>
+          <NavLink to="/materi" className="nav-item" activeclassname="active">
+            <FaFolderOpen /> My Learnings
           </NavLink>
           <NavLink to="/programs" className="nav-item" activeclassname="active">
             <FaBook /> Programs
@@ -35,6 +40,9 @@ const Sidebar = () => {
           </NavLink>
           <NavLink to="/payment" className="nav-item" activeclassname="active">
             <FaMoneyBill /> Payments
+          </NavLink>
+          <NavLink to="/certificates" className="nav-item" activeclassname="active">
+            <FaCertificate /> Certificates
           </NavLink>
         </div>
         

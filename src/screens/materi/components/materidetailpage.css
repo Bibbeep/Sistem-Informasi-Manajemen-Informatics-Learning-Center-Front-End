@@ -50,6 +50,33 @@ body {
   font-weight: 700;
 }
 
+/* Style for program meta details */
+.program-meta-details,
+.program-specific-details {
+    color: #0d3b66; /* Dark blue for readability */
+    margin-bottom: 20px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.program-meta-details p,
+.program-specific-details p {
+    margin-bottom: 5px;
+    font-size: 1.05em;
+    line-height: 1.5;
+}
+
+.program-meta-details a,
+.program-specific-details a {
+    color: #3b82f6; /* Link color */
+    text-decoration: none;
+}
+
+.program-meta-details a:hover,
+.program-specific-details a:hover {
+    text-decoration: underline;
+}
+
 /* Tombol kembali */
 .back-button {
   background-color: #ef4444;
@@ -110,6 +137,24 @@ body {
   box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
 }
 
+.youtube-embed {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  padding-top: 56.25%; /* 16:9 Aspect Ratio */
+  margin-top: 1rem;
+}
+
+.youtube-embed iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none; /* Remove default border */
+  border-radius: 8px; /* Optional: adds rounded corners */
+}
+
 .youtube-thumbnail {
   border-radius: 8px;
   transition: transform 0.2s;
@@ -117,3 +162,53 @@ body {
 .youtube-thumbnail:hover {
   transform: scale(1.02);
 }
+
+.completed-icon {
+  color: #22c55e; /* green-500 */
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+
+/* Mark as Complete Section */
+.mark-complete-section {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f0f8ff; /* Light blue background */
+    border: 1px solid #b0e0e6;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 1.1em;
+    color: #0d3b66;
+    font-weight: 500;
+}
+
+.mark-complete-button {
+    background-color: #3cb371; /* Medium Sea Green */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.mark-complete-button:hover:not(:disabled) {
+    background-color: #2e8b57; /* Darker green on hover */
+    transform: translateY(-2px);
+}
+
+.mark-complete-button:disabled {
+    background-color: #a9a9a9; /* Dark Gray when disabled */
+    cursor: not-allowed;
+}
+
+.completed-status-icon {
+    color: #22c55e; /* Green */
+    font-size: 1.5em;
+    margin-left: 10px;
+}
+

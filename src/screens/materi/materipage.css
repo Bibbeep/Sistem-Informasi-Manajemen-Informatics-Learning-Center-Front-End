@@ -103,3 +103,25 @@
 .open-button:hover {
   background-color: #2563eb;
 }
+
+/* === Progress Bar Styles (Corrected) === */
+.progress-bar-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background-color: #e0e7ef;
+  border-radius: 8px;
+  height: 8px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  background-color: #3b82f6;
+  height: 100%;
+  border-radius: 0;
+  transition: width 0.5s ease-in-out;
+  margin: 0;
+  padding: 0;
+}
+

@@ -3,14 +3,13 @@ import Homepage from "./home/HomePage";
 import Login from "./screens/login/Login";
 import Register from "./screens/register/Regis";
 import Dashboard from "./screens/dashboard/Dashboard";
-import Course from "./screens/programs/Course";
-import Seminar from "./screens/programs/Seminar";
-import Workshop from "./screens/programs/Workshop";
-import Competition from "./screens/programs/Competition";
+import ProgramPage from "./screens/programs/ProgramPage";
 import MateriPage from "./screens/materi/MateriPage";
 import MateriDetailPage from "./screens/materi/components/MateriDetailPage";
 import Forum from "./screens/forum/Forum";
+import ForumDetailPage from './screens/forum/ForumDetailPage'; // New import
 import Payment from "./screens/payment/Payment";
+import InvoiceDetailPage from "./screens/payment/InvoiceDetailPage";
 import Contact from "./screens/contact/ContactUs";
 import Certificate from "./screens/certificates/CertificatesPage";
 import AdminDashboard from './admin/AdminDashboard';
@@ -42,16 +41,18 @@ function App() {
         {/* Private Routes for authenticated users */}
         <Route path="/" element={<PrivateRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/programs" element={<Course />} />
+          <Route path="/programs" element={<ProgramPage />} />
           <Route path="/certificates" element={<Certificate />} />
-          <Route path="/programs/course" element={<Course />} />
-          <Route path="/programs/seminar" element={<Seminar />} />
-          <Route path="/programs/workshop" element={<Workshop />} />
+          <Route path="/programs/course" element={<ProgramPage />} />
+          <Route path="/programs/seminar" element={<ProgramPage />} />
+          <Route path="/programs/workshop" element={<ProgramPage />} />
           <Route path="/materi" element={<MateriPage />} />
           <Route path="/materi/detail/:id" element={<MateriDetailPage />} />
-          <Route path="/programs/competition" element={<Competition />} />
+          <Route path="/programs/competition" element={<ProgramPage />} />
           <Route path="/forum" element={<Forum />} />
+          <Route path="/forum/:id" element={<ForumDetailPage />} />
           <Route path="/payment" element={<Payment />} />
+          <Route path="/payment/invoice/:id" element={<InvoiceDetailPage />} />
           <Route path="/contact" element={<Contact />} />
         </Route>
         

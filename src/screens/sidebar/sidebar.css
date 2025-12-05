@@ -54,3 +54,10 @@
   color: #2563eb;
   font-weight: 600;
 }
+
+/* Style for the logo link to remove default link styling */
+.sidebar-logo-link {
+  text-decoration: none;
+  color: inherit;
+}
+

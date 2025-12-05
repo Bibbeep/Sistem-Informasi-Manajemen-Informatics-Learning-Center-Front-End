@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './homepage.css';
+import { useAuth } from '../context/AuthContext';
+
 
 const programDescriptions = {
   Course: 'Pelatihan intensif untuk meningkatkan keterampilan teknis secara bertahap dan terstruktur.',
@@ -30,6 +32,7 @@ const formatHarga = (harga) => {
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth(); // Use useAuth hook
   const [scrolled, setScrolled] = useState(false);
   const [courses, setCourses] = useState([]);
   const [workshops, setWorkshops] = useState([]);
@@ -170,7 +173,15 @@ const HomePage = () => {
   }, []);
 
   const scrollToRef = (ref) => ref.current?.scrollIntoView({ behavior: 'smooth' });
-  const handleCardClick = () => navigate('/login');
+
+  const handleCarouselCardClick = (program) => {
+    if (!user) {
+      navigate('/login');
+    } else {
+      localStorage.setItem('selectedProgramIdForModal', program.id);
+      navigate('/programs');
+    }
+  };
 
   const scrollContainer = (ref, direction) => {
     if (ref.current) {
@@ -202,10 +213,10 @@ const HomePage = () => {
               <div
                 key={program.id}
                 className="carousel-card enhanced-card"
-                onClick={handleCardClick}
+                onClick={() => handleCarouselCardClick(program)} // Pass program object
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && handleCardClick()}
+                onKeyDown={(e) => e.key === 'Enter' && handleCarouselCardClick(program)}
               >
                 <div className="card-content">
                   <h4 className="card-title">{program.title}</h4>
@@ -315,3 +326,4 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
