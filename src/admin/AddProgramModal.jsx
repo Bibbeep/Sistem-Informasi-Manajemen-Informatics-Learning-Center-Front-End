@@ -14,6 +14,14 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
     availableDate: null,
     type: 'Course',
     priceIdr: '',
+    isOnline: true,
+    videoConferenceUrl: '',
+    locationAddress: '',
+    contestRoomUrl: '',
+    speakerNames: '', // Storing as comma-separated string
+    facilitatorNames: '', // Storing as comma-separated string
+    hostName: '',
+    totalPrize: '',
   });
   const [description, setDescription] = useState('');
 
@@ -24,14 +32,31 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
         availableDate: defaultData.availableDate ? new Date(defaultData.availableDate) : null,
         type: defaultData.type || 'Course',
         priceIdr: defaultData.priceIdr || '',
+        isOnline: defaultData.isOnline !== undefined ? defaultData.isOnline : true,
+        videoConferenceUrl: defaultData.videoConferenceUrl || '',
+        locationAddress: defaultData.locationAddress || '',
+        contestRoomUrl: defaultData.contestRoomUrl || '',
+        speakerNames: Array.isArray(defaultData.speakerNames) ? defaultData.speakerNames.join(', ') : '',
+        facilitatorNames: Array.isArray(defaultData.facilitatorNames) ? defaultData.facilitatorNames.join(', ') : '',
+        hostName: defaultData.hostName || '',
+        totalPrize: defaultData.totalPrize || '',
       });
       setDescription(defaultData.description || '');
     } else {
+      // Reset form to default values for a new program
       setFormData({
         title: '',
         availableDate: null,
         type: 'Course',
         priceIdr: '',
+        isOnline: true,
+        videoConferenceUrl: '',
+        locationAddress: '',
+        contestRoomUrl: '',
+        speakerNames: '',
+        facilitatorNames: '',
+        hostName: '',
+        totalPrize: '',
       });
       setDescription('');
     }
@@ -51,6 +76,26 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
       type: formData.type,
       priceIdr: Number(formData.priceIdr),
     };
+
+    // Add type-specific fields to the payload
+    if (formData.type === 'Seminar') {
+      programData.isOnline = formData.isOnline;
+      if(formData.isOnline) programData.videoConferenceUrl = formData.videoConferenceUrl;
+      else programData.locationAddress = formData.locationAddress;
+      programData.speakerNames = formData.speakerNames.split(',').map(s => s.trim()).filter(s => s);
+    } else if (formData.type === 'Workshop') {
+      programData.isOnline = formData.isOnline;
+      if(formData.isOnline) programData.videoConferenceUrl = formData.videoConferenceUrl;
+      else programData.locationAddress = formData.locationAddress;
+      programData.facilitatorNames = formData.facilitatorNames.split(',').map(s => s.trim()).filter(s => s);
+    } else if (formData.type === 'Competition') {
+      programData.isOnline = formData.isOnline;
+      if(formData.isOnline) programData.videoConferenceUrl = formData.videoConferenceUrl;
+      else programData.locationAddress = formData.locationAddress;
+      programData.contestRoomUrl = formData.contestRoomUrl;
+      programData.hostName = formData.hostName;
+      programData.totalPrize = Number(formData.totalPrize);
+    }
 
     try {
       if (defaultData) {
@@ -73,59 +118,57 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
       <div className="modal-content scroll-hidden">
         <h2>{defaultData ? 'Update Program' : 'Tambah Program'}</h2>
         <form onSubmit={handleSubmit} className="modal-form">
-          <input
-            type="text"
-            name="title"
-            placeholder="Judul Program"
-            value={formData.title}
-            onChange={handleChange}
-            required
-          />
+          <input type="text" name="title" placeholder="Judul Program" value={formData.title} onChange={handleChange} required />
           <div className="form-group">
-            <label htmlFor="description" className="form-label">
-              Deskripsi Program
-            </label>
-            <textarea
-              id="description"
-              className="form-textarea scroll-hidden w-full p-2 border border-gray-300 rounded resize-none h-20"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Masukkan deskripsi singkat program..."
-              required
-            />
+            <label htmlFor="description" className="form-label">Deskripsi Program</label>
+            <textarea id="description" className="form-textarea scroll-hidden w-full p-2 border border-gray-300 rounded resize-none h-20" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Masukkan deskripsi singkat program..." required />
           </div>
           <label>Tanggal Program</label>
-          <DatePicker
-            selected={formData.availableDate}
-            onChange={(date) => setFormData((prev) => ({ ...prev, availableDate: date }))}
-            dateFormat="dd MMMM yyyy"
-            locale="id"
-            placeholderText="Pilih tanggal"
-            required
-          />
+          <DatePicker selected={formData.availableDate} onChange={(date) => setFormData((prev) => ({ ...prev, availableDate: date }))} dateFormat="dd MMMM yyyy" locale="id" placeholderText="Pilih tanggal" required />
           <select name="type" value={formData.type} onChange={handleChange}>
             <option value="Course">Course</option>
             <option value="Seminar">Seminar</option>
             <option value="Competition">Competition</option>
             <option value="Workshop">Workshop</option>
           </select>
-          <input
-            type="number"
-            name="priceIdr"
-            placeholder="Harga Program (Rp)"
-            value={formData.priceIdr}
-            onChange={handleChange}
-            required
-            min="0"
-            step="1"
-          />
+          <input type="number" name="priceIdr" placeholder="Harga Program (Rp)" value={formData.priceIdr} onChange={handleChange} required min="0" step="1" />
+
+          {formData.type !== 'Course' && (
+            <>
+              <div className="form-group">
+                <label>Tipe Pelaksanaan:</label>
+                <div className="radio-group">
+                  <label><input type="radio" name="isOnline" value={true} checked={formData.isOnline === true} onChange={() => setFormData(prev => ({...prev, isOnline: true}))} /> Online</label>
+                  <label><input type="radio" name="isOnline" value={false} checked={formData.isOnline === false} onChange={() => setFormData(prev => ({...prev, isOnline: false}))} /> Offline</label>
+                </div>
+              </div>
+              {formData.isOnline ? (
+                <input type="text" name="videoConferenceUrl" placeholder="URL Video Conference" value={formData.videoConferenceUrl} onChange={handleChange} required />
+              ) : (
+                <input type="text" name="locationAddress" placeholder="Alamat Lokasi" value={formData.locationAddress} onChange={handleChange} required />
+              )}
+            </>
+          )}
+
+          {formData.type === 'Seminar' && (
+            <input type="text" name="speakerNames" placeholder="Nama Speaker (pisahkan dengan koma)" value={formData.speakerNames} onChange={handleChange} />
+          )}
+
+          {formData.type === 'Workshop' && (
+            <input type="text" name="facilitatorNames" placeholder="Nama Fasilitator (pisahkan dengan koma)" value={formData.facilitatorNames} onChange={handleChange} />
+          )}
+
+          {formData.type === 'Competition' && (
+            <>
+              <input type="text" name="contestRoomUrl" placeholder="URL Ruang Kontes" value={formData.contestRoomUrl} onChange={handleChange} />
+              <input type="text" name="hostName" placeholder="Nama Host" value={formData.hostName} onChange={handleChange} />
+              <input type="number" name="totalPrize" placeholder="Total Hadiah (Rp)" value={formData.totalPrize} onChange={handleChange} required min="0" step="1" />
+            </>
+          )}
+
           <div className="modal-actions">
-            <button type="submit" className="admin-btn add">
-              Simpan
-            </button>
-            <button type="button" className="admin-btn delete" onClick={onClose}>
-              Batal
-            </button>
+            <button type="submit" className="admin-btn add">Simpan</button>
+            <button type="button" className="admin-btn delete" onClick={onClose}>Batal</button>
           </div>
         </form>
       </div>
