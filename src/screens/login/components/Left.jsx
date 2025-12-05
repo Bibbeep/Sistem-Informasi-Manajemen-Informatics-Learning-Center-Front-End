@@ -37,9 +37,10 @@ const Left = () => {
 
     setLoading(true);
     try {
-      const user = await login(email, password);
+      const { user } = await login(email, password); // Destructure to get the user object
       toast.success('Login berhasil!');
       setTimeout(() => {
+        // Use the admin property from the user object for redirection
         navigate(user.admin ? '/admin/dashboard' : '/dashboard');
       }, 1000);
     } catch (error) {
