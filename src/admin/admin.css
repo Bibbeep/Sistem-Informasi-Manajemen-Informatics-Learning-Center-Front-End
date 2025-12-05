@@ -556,3 +556,14 @@
   font-weight: 600;
 }
 
+
+/* Styling for sortable table headers */
+.admin-table th.sortable {
+  cursor: pointer;
+  user-select: none; /* Prevent text selection on double-click */
+}
+
+.admin-table th.sortable span {
+  margin-left: 5px;
+}
+

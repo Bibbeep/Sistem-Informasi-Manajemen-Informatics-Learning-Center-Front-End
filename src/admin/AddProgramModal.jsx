@@ -3,15 +3,17 @@ import DatePicker, { registerLocale } from 'react-datepicker';
 import id from 'date-fns/locale/id';
 import 'react-datepicker/dist/react-datepicker.css';
 import './admin.css';
+import api from '../services/api';
+import { toast } from 'react-toastify';
 
 registerLocale('id', id);
 
 const AddProgramModal = ({ onClose, onSave, defaultData }) => {
   const [formData, setFormData] = useState({
     title: '',
-    date: null, // simpan sebagai Date object
+    availableDate: null,
     type: 'Course',
-    price: '',
+    priceIdr: '',
   });
   const [description, setDescription] = useState('');
 
@@ -19,17 +21,17 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
     if (defaultData) {
       setFormData({
         title: defaultData.title || '',
-        date: defaultData.date ? new Date(defaultData.date) : null,
+        availableDate: defaultData.availableDate ? new Date(defaultData.availableDate) : null,
         type: defaultData.type || 'Course',
-        price: defaultData.price || '',
+        priceIdr: defaultData.priceIdr || '',
       });
       setDescription(defaultData.description || '');
     } else {
       setFormData({
         title: '',
-        date: null,
+        availableDate: null,
         type: 'Course',
-        price: '',
+        priceIdr: '',
       });
       setDescription('');
     }
@@ -40,15 +42,30 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const fullData = {
-      ...formData,
-      date: formData.date ? formData.date.toISOString().split('T')[0] : '',
-      description,
+    const programData = {
+      title: formData.title,
+      description: description,
+      availableDate: formData.availableDate ? formData.availableDate.toISOString() : null,
+      type: formData.type,
+      priceIdr: Number(formData.priceIdr),
     };
-    onSave(fullData);
-    onClose();
+
+    try {
+      if (defaultData) {
+        await api.patch(`/programs/${defaultData.id}`, programData);
+        toast.success("Program berhasil diperbarui.");
+      } else {
+        await api.post('/programs', programData);
+        toast.success("Program berhasil ditambahkan.");
+      }
+      onSave();
+      onClose();
+    } catch (err) {
+      console.error("Failed to save program:", err);
+      toast.error(err.response?.data?.message || "Gagal menyimpan program.");
+    }
   };
 
   return (
@@ -64,8 +81,6 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
             onChange={handleChange}
             required
           />
-
-          {/* Deskripsi */}
           <div className="form-group">
             <label htmlFor="description" className="form-label">
               Deskripsi Program
@@ -76,37 +91,34 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Masukkan deskripsi singkat program..."
+              required
             />
           </div>
-
           <label>Tanggal Program</label>
           <DatePicker
-            selected={formData.date}
-            onChange={(date) => setFormData((prev) => ({ ...prev, date }))}
+            selected={formData.availableDate}
+            onChange={(date) => setFormData((prev) => ({ ...prev, availableDate: date }))}
             dateFormat="dd MMMM yyyy"
             locale="id"
             placeholderText="Pilih tanggal"
             required
           />
-
           <select name="type" value={formData.type} onChange={handleChange}>
             <option value="Course">Course</option>
             <option value="Seminar">Seminar</option>
             <option value="Competition">Competition</option>
             <option value="Workshop">Workshop</option>
           </select>
-
           <input
             type="number"
-            name="price"
+            name="priceIdr"
             placeholder="Harga Program (Rp)"
-            value={formData.price}
+            value={formData.priceIdr}
             onChange={handleChange}
             required
-            min="10000"
+            min="0"
             step="1"
           />
-
           <div className="modal-actions">
             <button type="submit" className="admin-btn add">
               Simpan
