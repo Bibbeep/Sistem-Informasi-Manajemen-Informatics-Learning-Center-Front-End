@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
 import {
   FaHome, FaBook, FaComments,
   FaMoneyBill, FaSignOutAlt, FaFolderOpen, FaCertificate // Added FaCertificate
@@ -18,9 +18,11 @@ const Sidebar = () => {
 
   return (
     <div className="sidebar">
-      <div className="sidebar-logo">
-        <img src="/images/logo.png" alt="ILC Logo" className="sidebar-logo-img" />
-      </div>
+      <Link to="/" className="sidebar-logo-link">
+        <div className="sidebar-logo">
+          <img src="/images/logo.png" alt="ILC Logo" className="sidebar-logo-img" />
+        </div>
+      </Link>
 
       <nav className="sidebar-nav">
         <div className="sidebar-main-links">
