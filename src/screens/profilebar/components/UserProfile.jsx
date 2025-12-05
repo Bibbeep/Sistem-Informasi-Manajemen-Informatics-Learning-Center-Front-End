@@ -6,11 +6,8 @@ import { ToastContainer, toast } from 'react-toastify';
 import { FaEdit } from 'react-icons/fa';
 
 
-const UserProfile = () => {
-  const { user, loading: authLoading } = useAuth();
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const UserProfile = () => {
+  const { user, profile, setProfile, loading: authLoading } = useAuth(); // Consume profile and setProfile from context
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [editFullName, setEditFullName] = useState('');
@@ -19,32 +16,16 @@ const UserProfile = () => {
   const [editConfirmPassword, setEditConfirmPassword] = useState('');
   const [editPicture, setEditPicture] = useState(null); // For file upload
   const [editLoading, setEditLoading] = useState(false);
+  const [error, setError] = useState(null); // Keep local error state for edit operations
 
+  // Initialize edit form fields when profile data becomes available or changes
   useEffect(() => {
-    if (!user || !user.sub) {
-      setLoading(false);
-      setError("User not logged in.");
-      return;
+    console.log("UserProfile useEffect - profile changed:", profile); // DEBUG
+    if (profile) {
+      setEditFullName(profile.fullName);
+      setEditEmail(profile.email);
     }
-
-    const fetchUserProfile = async () => {
-      try {
-        setLoading(true);
-        const response = await api.get(`/users/${user.sub}`);
-        setProfile(response.data.data.user);
-        setEditFullName(response.data.data.user.fullName);
-        setEditEmail(response.data.data.user.email);
-        setError(null);
-      } catch (err) {
-        setError("Failed to load user profile.");
-        console.error("Fetch error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserProfile();
-  }, [user]);
+  }, [profile]);
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
@@ -64,30 +45,32 @@ const UserProfile = () => {
 
     try {
       if (Object.keys(payload).length > 0) {
-        await api.patch(`/users/${user.sub}`, payload);
+        const response = await api.patch(`/users/${user.sub}`, payload);
         toast.success("Profile updated successfully!");
-        // Re-fetch profile to update UI
-        const response = await api.get(`/users/${user.sub}`);
+        // Update global profile state in AuthContext
         setProfile(response.data.data.user);
       }
 
       if (editPicture) {
         const formData = new FormData();
         formData.append('photo', editPicture);
-        await api.put(`/users/${user.sub}/profilePhotos`, formData, {
+        const response = await api.put(`/users/${user.sub}/profilePhotos`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
         });
         toast.success("Profile picture updated successfully!");
-        const response = await api.get(`/users/${user.sub}`);
-        setProfile(response.data.data.user);
+        // Explicitly re-fetch the profile to ensure we get the latest data,
+        // as file upload endpoints might not return the full user object.
+        const updatedProfileResponse = await api.get(`/users/${user.sub}`);
+        setProfile(updatedProfileResponse.data.data.user); 
       }
       setShowEditModal(false);
     } catch (err) {
       const errorMessage = err.response?.data?.message || "Failed to update profile.";
       toast.error(errorMessage);
       console.error("Update error:", err);
+      setError(errorMessage);
     } finally {
       setEditLoading(false);
     }
@@ -104,18 +87,22 @@ const UserProfile = () => {
     setEditPassword('');
     setEditConfirmPassword('');
     setEditPicture(null);
+    // Reset edit form fields to current profile values on close
+    if (profile) {
+      setEditFullName(profile.fullName);
+      setEditEmail(profile.email);
+    }
   }
 
-  if (authLoading || loading) {
+  console.log("UserProfile render - authLoading:", authLoading, "profile:", profile, "user:", user); // DEBUG
+  // Use authLoading directly, no need for local loading state
+  if (authLoading || !profile) { // If auth is loading or profile not yet loaded from context
     return <div className="user-profile"><p>Loading profile...</p></div>;
   }
 
+  // Display error from local edit operations, or if AuthContext couldn't load profile
   if (error) {
     return <div className="user-profile"><p style={{ color: 'red' }}>Error: {error}</p></div>;
-  }
-
-  if (!profile) {
-    return <div className="user-profile"><p>No profile data available.</p></div>;
   }
 
   return (
