@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import AdminSidebar from './AdminSidebar';
 import AddCertificateModal from './AddCertificateModal';
 import './admin.css';
+import './modals.css'; // Import the new modal styles
 import api from '../services/api';
 import { toast } from 'react-toastify';
 
@@ -191,7 +192,7 @@ const ManageCertificates = () => {
 
         {viewingCert && (
           <div className="modal-overlay" onClick={() => setViewingCert(null)}>
-            <div className="modal-box certificate-modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-box certificate-viewer-modal" onClick={(e) => e.stopPropagation()}>
               <h3>{viewingCert.title}</h3>
               {viewingCert.documentUrl ? (
                 <iframe src={viewingCert.documentUrl} width="100%" height="100%" style={{border: 'none'}} title={viewingCert.title}></iframe>

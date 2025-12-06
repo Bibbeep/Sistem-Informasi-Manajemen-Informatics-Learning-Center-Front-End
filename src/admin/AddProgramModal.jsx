@@ -3,6 +3,7 @@ import DatePicker, { registerLocale } from 'react-datepicker';
 import id from 'date-fns/locale/id';
 import 'react-datepicker/dist/react-datepicker.css';
 import './admin.css';
+import './modals.css'; // Import the new modal styles
 import api from '../services/api';
 import { toast } from 'react-toastify';
 
@@ -130,7 +131,7 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
 
   return (
     <div className="modal-overlay scroll-hidden">
-      <div className="modal-content scroll-hidden">
+      <div className="modal-box">
         <h2>{defaultData ? 'Update Program' : 'Tambah Program'}</h2>
         <form onSubmit={handleSubmit} className="modal-form">
           <input type="text" name="title" placeholder="Judul Program" value={formData.title} onChange={handleChange} required />

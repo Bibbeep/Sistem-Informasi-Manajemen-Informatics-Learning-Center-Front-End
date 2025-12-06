@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './admin.css';
+import './modals.css'; // Import the new modal styles
 import api from '../services/api';
 import { toast } from 'react-toastify';
 
@@ -62,7 +63,7 @@ const ManageMaterialsModal = ({ onClose, programId, moduleId }) => {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content">
+      <div className="modal-box">
         <h2>Kelola Materi Modul</h2>
         <div className="materials-list">
           {loading ? (

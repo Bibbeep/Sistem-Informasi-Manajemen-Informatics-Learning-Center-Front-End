@@ -1,0 +1,154 @@
+/* src/admin/modals.css */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(30, 41, 59, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  backdrop-filter: blur(4px);
+  overflow-y: auto; /* Allow scrolling if modal content is too long for viewport */
+  padding: 20px; /* Add some padding to prevent modal touching edges */
+}
+
+/* Default modal size for forms (AddProgram, AddMaterial, AddCertificate) */
+.modal-box {
+  background-color: #ffffff;
+  padding: 2rem; /* Consistent padding */
+  border-radius: 16px;
+  width: 90%; /* Responsive width */
+  max-width: 550px; /* Max width for smaller modals */
+  max-height: 90vh; /* Don't get too tall */
+  overflow-y: auto; /* Allow internal scrolling if content overflows */
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  animation: fadeInUp 0.3s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Specific styles for the Certificate Viewer Modal */
+.certificate-viewer-modal {
+  width: 95vw; /* Make it very wide */
+  max-width: 1200px; /* A generous max-width for wide screens */
+  max-height: 95vh; /* Allow it to take more vertical space */
+  aspect-ratio: 16 / 9; /* Enforce a widescreen aspect ratio */
+  padding: 24px; /* Maintain padding */
+  /* Remove overflow: hidden; from .modal-box if it causes issues with iframe */
+  /* Re-add specific overflow rules if needed after testing */
+}
+
+/* General modal content styling */
+.modal-box h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #0d3b66;
+  font-size: 1.8rem;
+  text-align: center;
+}
+
+.modal-box .modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding-bottom: 20px; /* Space for actions */
+}
+
+.modal-box .modal-form label {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.modal-box .modal-form input[type='text'],
+.modal-box .modal-form input[type='number'],
+.modal-box .modal-form select,
+.modal-box .modal-form textarea,
+.modal-box .react-datepicker-wrapper input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background-color: #f9fbfd;
+}
+
+.modal-box .modal-form input:focus,
+.modal-box .modal-form select:focus,
+.modal-box .modal-form textarea:focus,
+.modal-box .react-datepicker-wrapper input:focus {
+  border-color: #4d9ef7;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(77, 158, 247, 0.2);
+}
+
+.modal-box .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.modal-box .modal-actions button {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  flex-grow: 0; /* Prevent buttons from stretching */
+  flex-shrink: 0;
+}
+
+.modal-box .modal-actions .admin-btn.add { /* "Simpan" button */
+  background-color: #3f72af;
+  color: white;
+}
+.modal-box .modal-actions .admin-btn.add:hover {
+  background-color: #316394;
+  transform: translateY(-2px);
+}
+.modal-box .modal-actions .admin-btn.add:disabled {
+  background-color: #a0c3e6;
+  cursor: not-allowed;
+}
+
+.modal-box .modal-actions .admin-btn.delete { /* "Batal" button */
+  background-color: #ef4444;
+  color: white;
+}
+.modal-box .modal-actions .admin-btn.delete:hover {
+  background-color: #dc2626;
+  transform: translateY(-2px);
+}
+
+/* Specific styling for view certificate iframe */
+.modal-box iframe {
+  flex-grow: 1;
+  min-height: 400px; /* Ensure a decent size even if content is small */
+  height: 100%; /* Fill available height */
+  width: 100%;
+  border: none;
+  background-color: #f0f2f5; /* Light background for the iframe area */
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

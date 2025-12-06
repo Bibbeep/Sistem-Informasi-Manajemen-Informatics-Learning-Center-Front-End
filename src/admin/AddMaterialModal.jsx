@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './admin.css';
+import './modals.css'; // Import the new modal styles
 import api from '../services/api';
 import { toast } from 'react-toastify';
 
@@ -58,7 +59,7 @@ const AddMaterialModal = ({ onClose, onSave, defaultData, programId }) => {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content">
+      <div className="modal-box">
         <h2>{defaultData ? 'Update Modul' : 'Tambah Modul'}</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
