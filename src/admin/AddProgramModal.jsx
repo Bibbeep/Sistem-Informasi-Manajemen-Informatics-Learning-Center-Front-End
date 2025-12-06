@@ -24,6 +24,7 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
     totalPrize: '',
   });
   const [description, setDescription] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (defaultData) {
@@ -67,8 +68,14 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleRadioChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value === 'true' }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     const programData = {
       title: formData.title,
       description: description,
@@ -106,10 +113,18 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
         toast.success("Program berhasil ditambahkan.");
       }
       onSave();
-      onClose();
+      onClose(); // Only close on success
     } catch (err) {
       console.error("Failed to save program:", err);
-      toast.error(err.response?.data?.message || "Gagal menyimpan program.");
+      let errorMessage = "Gagal menyimpan program. Silakan coba lagi.";
+      if (err.response && err.response.data && err.response.data.errors) {
+        errorMessage = err.response.data.errors.map(e => e.message).join('; ');
+      } else if (err.response && err.response.data && err.response.data.message) {
+        errorMessage = err.response.data.message;
+      }
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -138,8 +153,8 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
               <div className="form-group">
                 <label>Tipe Pelaksanaan:</label>
                 <div className="radio-group">
-                  <label><input type="radio" name="isOnline" value={true} checked={formData.isOnline === true} onChange={() => setFormData(prev => ({...prev, isOnline: true}))} /> Online</label>
-                  <label><input type="radio" name="isOnline" value={false} checked={formData.isOnline === false} onChange={() => setFormData(prev => ({...prev, isOnline: false}))} /> Offline</label>
+                  <label className={formData.isOnline ? 'checked' : ''}><input type="radio" name="isOnline" value="true" checked={formData.isOnline === true} onChange={handleRadioChange} /> Online</label>
+                  <label className={!formData.isOnline ? 'checked' : ''}><input type="radio" name="isOnline" value="false" checked={formData.isOnline === false} onChange={handleRadioChange} /> Offline</label>
                 </div>
               </div>
               {formData.isOnline ? (
@@ -166,10 +181,21 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
             </>
           )}
 
-          <div className="modal-actions">
-            <button type="submit" className="admin-btn add">Simpan</button>
-            <button type="button" className="admin-btn delete" onClick={onClose}>Batal</button>
-          </div>
+                    <div className="modal-actions">
+
+                      <button type="submit" className="admin-btn add" disabled={isSubmitting}>
+
+                        {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+
+                      </button>
+
+                      <button type="button" className="admin-btn delete" onClick={onClose}>
+
+                        Batal
+
+                      </button>
+
+                    </div>
         </form>
       </div>
     </div>

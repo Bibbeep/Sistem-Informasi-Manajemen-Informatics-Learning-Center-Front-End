@@ -1,76 +1,93 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AdminSidebar from './AdminSidebar';
 import AddMaterialModal from './AddMaterialModal';
-import { v4 as uuidv4 } from 'uuid';
+import ManageMaterialsModal from './ManageMaterialsModal'; // Import the new modal
 import './admin.css';
+import api from '../services/api';
+import { toast } from 'react-toastify';
 
 const ManageMaterial = () => {
   const [programs, setPrograms] = useState([]);
   const [selectedProgramId, setSelectedProgramId] = useState('');
   const [modules, setModules] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingModules, setLoadingModules] = useState(false);
+  const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [editData, setEditData] = useState(null);
+  const [showMaterialsModal, setShowMaterialsModal] = useState(false); // New state for materials modal
+  const [selectedModuleId, setSelectedModuleId] = useState(null); // New state for selected module
 
-  // Fetch programs from backend
-  const fetchPrograms = async () => {
-    try {
-      const res = await fetch('http://localhost/react-backend/programs.php');
-      const data = await res.json();
-      setPrograms(data);
-    } catch (error) {
-      console.error('Gagal fetch programs', error);
-    }
+  const handleManageMaterials = (moduleId) => {
+    setSelectedModuleId(moduleId);
+    setShowMaterialsModal(true);
   };
-
-  useEffect(() => {
-    fetchPrograms();
+  
+  const fetchPrograms = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api.get('/programs', {
+        params: {
+          type: 'course',
+          limit: 100, // Fetch all courses
+        },
+      });
+      setPrograms(response.data.data.programs);
+    } catch (err) {
+      console.error('Gagal fetch programs', err);
+      setError("Gagal memuat data program.");
+      toast.error("Gagal memuat data program.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    if (selectedProgramId) {
-      const saved = localStorage.getItem(`modules_program_${selectedProgramId}`);
-      setModules(saved ? JSON.parse(saved) : []);
-    } else {
-      setModules([]);
+    fetchPrograms();
+  }, [fetchPrograms]);
+
+  const fetchModules = useCallback(async () => {
+    if (!selectedProgramId) return;
+    setLoadingModules(true);
+    try {
+      const response = await api.get(`/programs/${selectedProgramId}/modules`);
+      setModules(response.data.data.modules);
+    } catch (err) {
+      console.error(`Failed to fetch modules for program ${selectedProgramId}:`, err);
+      toast.error("Gagal memuat modul.");
+    } finally {
+      setLoadingModules(false);
     }
-    setEditData(null);
   }, [selectedProgramId]);
 
-  const handleSaveModule = (moduleData) => {
-    if (!selectedProgramId) {
-      alert('Pilih program dulu');
-      return;
-    }
-    const key = `modules_program_${selectedProgramId}`;
-    const savedModules = localStorage.getItem(key);
-    const currentModules = savedModules ? JSON.parse(savedModules) : [];
+  useEffect(() => {
+    fetchModules();
+  }, [fetchModules]);
 
-    if (moduleData.id) {
-      const updatedModules = currentModules.map(m => m.id === moduleData.id ? moduleData : m);
-      localStorage.setItem(key, JSON.stringify(updatedModules));
-      setModules(updatedModules);
-    } else {
-      const newModule = { ...moduleData, id: uuidv4() };
-      const newModules = [...currentModules, newModule];
-      localStorage.setItem(key, JSON.stringify(newModules));
-      setModules(newModules);
-    }
-    setShowModal(false);
-  };
-
-  const handleEditModule = (mod) => {
-    setEditData(mod);
+  const handleAdd = () => {
+    setEditData(null);
     setShowModal(true);
   };
 
-  const handleDeleteModule = (id) => {
-    if (window.confirm('Yakin hapus modul ini?')) {
-      const key = `modules_program_${selectedProgramId}`;
-      const filtered = modules.filter(m => m.id !== id);
-      localStorage.setItem(key, JSON.stringify(filtered));
-      setModules(filtered);
+  const handleEdit = (module) => {
+    setEditData(module);
+    setShowModal(true);
+  };
+
+  const handleDelete = async (moduleId) => {
+    if (window.confirm('Yakin ingin menghapus modul ini?')) {
+      try {
+        await api.delete(`/programs/${selectedProgramId}/modules/${moduleId}`);
+        toast.success("Modul berhasil dihapus.");
+        fetchModules(); // Refresh the list
+      } catch (err) {
+        console.error("Failed to delete module:", err);
+        toast.error("Gagal menghapus modul.");
+      }
     }
   };
+
 
   return (
     <div style={{ display: 'flex' }}>
@@ -80,84 +97,102 @@ const ManageMaterial = () => {
 
         <div className="admin-actions">
           <label style={{ fontWeight: 600, marginRight: '10px', marginTop: '5px', color: '#0d3b66'}}>
-            Pilih Program:
+            Pilih Program Kursus:
           </label>
-          <select
-            className="admin-select"
-            value={selectedProgramId}
-            onChange={(e) => setSelectedProgramId(e.target.value)}
-          >
-            <option value="">-- Pilih Program --</option>
-            {programs.map(p => (
-              <option key={p.id} value={p.id}>
-                {p.title}
-              </option>
-            ))}
-          </select>
+          {loading ? (
+            <p>Memuat program...</p>
+          ) : error ? (
+            <p style={{color: 'red'}}>{error}</p>
+          ) : (
+            <select
+              className="admin-select"
+              value={selectedProgramId}
+              onChange={(e) => setSelectedProgramId(e.target.value)}
+            >
+              <option value="">-- Pilih Program --</option>
+              {programs.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.title}
+                </option>
+              ))}
+            </select>
+          )}
 
           {selectedProgramId && (
-            <button className="admin-btn add" style={{ marginLeft: '10px' }} onClick={() => {
-              setEditData(null);
-              setShowModal(true);
-            }}>
+            <button className="admin-btn add" style={{ marginLeft: '10px' }} onClick={handleAdd}>
               Tambah Modul
             </button>
           )}
         </div>
 
         {selectedProgramId && (
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>No. Modul</th>
-                <th>Link YouTube</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {modules.length === 0 ? (
+          loadingModules ? (
+            <p>Memuat modul...</p>
+          ) : (
+            <table className="admin-table">
+              <thead>
                 <tr>
-                  <td colSpan="3" style={{ textAlign: 'center', color: '#999' }}>
-                    Belum ada modul untuk program ini.
-                  </td>
+                  <th>No. Modul</th>
+                  <th>Link YouTube</th>
+                  <th>Aksi</th>
                 </tr>
-              ) : (
-                modules
-                  .sort((a, b) => Number(a.module_number) - Number(b.module_number))
-                  .map(mod => (
-                    <tr key={mod.id}>
-                      <td>{mod.module_number}</td>
-                      <td>
-                        <a href={mod.youtube_link} target="_blank" rel="noreferrer">
-                          {mod.youtube_link}
-                        </a>
-                      </td>
-                      <td>
-                        <button className="admin-btn edit" onClick={() => handleEditModule(mod)}>
-                          Update
-                        </button>
-                        <button className="admin-btn delete" onClick={() => handleDeleteModule(mod.id)}>
-                          Hapus
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-              )}
-            </tbody>
-          </table>
-        )}
-
-        {showModal && (
-          <AddMaterialModal
-            onClose={() => setShowModal(false)}
-            onSave={handleSaveModule}
-            defaultData={editData}
-            programId={selectedProgramId}
-          />
-        )}
-      </div>
-    </div>
-  );
+              </thead>
+              <tbody>
+                {modules.length === 0 ? (
+                  <tr>
+                    <td colSpan="3" style={{ textAlign: 'center', color: '#999' }}>
+                      Belum ada modul untuk program ini.
+                    </td>
+                  </tr>
+                ) : (
+                  modules
+                    .sort((a, b) => a.numberCode - b.numberCode)
+                    .map(mod => (
+                      <tr key={mod.id}>
+                        <td>{mod.numberCode}</td>
+                        <td>
+                          <a href={mod.youtubeUrl} target="_blank" rel="noreferrer">
+                            {mod.youtubeUrl}
+                          </a>
+                        </td>
+                                                                      <td>
+                                                                        <button className="admin-btn edit" onClick={() => handleEdit(mod)}>
+                                                                          Update
+                                                                        </button>
+                                                                        <button className="admin-btn" onClick={() => handleManageMaterials(mod.id)}>
+                                                                          Kelola Materi
+                                                                        </button>
+                                                                        <button className="admin-btn delete" onClick={() => handleDelete(mod.id)}>
+                                                                          Hapus
+                                                                        </button>
+                                                                      </td>
+                                                                    </tr>
+                                                                  ))
+                                                              )}
+                                                            </tbody>
+                                                          </table>
+                                                        )
+                                                      )}
+                                              
+                                                      {showModal && (
+                                                        <AddMaterialModal
+                                                          onClose={() => setShowModal(false)}
+                                                          onSave={fetchModules}
+                                                          defaultData={editData}
+                                                          programId={selectedProgramId}
+                                                        />
+                                                      )}
+                                              
+                                                      {showMaterialsModal && (
+                                                        <ManageMaterialsModal
+                                                          onClose={() => setShowMaterialsModal(false)}
+                                                          programId={selectedProgramId}
+                                                          moduleId={selectedModuleId}
+                                                        />
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                );
 };
 
 export default ManageMaterial;
