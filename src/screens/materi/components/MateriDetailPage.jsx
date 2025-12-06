@@ -36,6 +36,8 @@ const MateriDetailPage = () => {
   const [enrollmentId, setEnrollmentId] = useState(null);
   const [enrollmentStatus, setEnrollmentStatus] = useState(null); // New state for enrollment status
   const [markAsCompleteLoading, setMarkAsCompleteLoading] = useState(false);
+  const [certificateForCompletedProgram, setCertificateForCompletedProgram] = useState(null); // New state for certificate
+  const [showCertificateModal, setShowCertificateModal] = useState(false); // New state for certificate modal
 
   const playerRefs = useRef({}); // Ref to hold YouTube player instances
   const [moduleInteractions, setModuleInteractions] = useState({});
@@ -78,7 +80,11 @@ const MateriDetailPage = () => {
 
         if (enrollmentSummary) {
           setEnrollmentId(enrollmentSummary.id);
-          setEnrollmentStatus(enrollmentSummary.status); // Set enrollment status
+          const currentEnrollmentStatus = enrollmentSummary.status.toLowerCase();
+          setEnrollmentStatus(currentEnrollmentStatus); // Set enrollment status in lowercase
+
+          console.log("Program Type:", programData.type);
+          console.log("Enrollment Status:", currentEnrollmentStatus);
 
           // If it's a Course, fetch modules and completed modules
           if (programData.type === 'Course') {
@@ -89,6 +95,21 @@ const MateriDetailPage = () => {
             }
             const modulesRes = await api.get(`/programs/${programId}/modules`);
             setModules(modulesRes.data.data.modules);
+          }
+          
+          // Fetch certificate if program is completed, regardless of type
+          if (currentEnrollmentStatus === 'completed') {
+            console.log("Attempting to fetch certificate for programId:", programId, "userId:", user.sub);
+            const certificateRes = await api.get(`/certificates`, {
+                params: { programId: programId, userId: user.sub }
+            });
+            console.log("Certificate API Response:", certificateRes.data);
+            if (certificateRes.data.data.certificates.length > 0) {
+                setCertificateForCompletedProgram(certificateRes.data.data.certificates[0]);
+                console.log("Certificate found and set:", certificateRes.data.data.certificates[0]);
+            } else {
+                console.log("No certificate found for this program and user.");
+            }
           }
         } else {
           throw new Error("You are not enrolled in this program.");
@@ -195,37 +216,47 @@ const MateriDetailPage = () => {
   };
   
   const renderProgramSpecificDetails = () => {
-    if (!program || !program.details) return null;
+    if (!program || !program.details || program.type === 'Course') return null;
 
     const { details } = program;
 
+    let content;
     switch (program.type) {
       case 'Seminar':
-        return (
-          <div className="program-specific-details">
+        content = (
+          <>
             <p><strong>Pembicara:</strong> {details.speakerNames?.join(', ') || 'N/A'}</p>
             <p><strong>Lokasi:</strong> {details.isOnline ? <a href={details.videoConferenceUrl} target="_blank" rel="noopener noreferrer">Online</a> : details.locationAddress || 'N/A'}</p>
-          </div>
+          </>
         );
+        break;
       case 'Workshop':
-        return (
-          <div className="program-specific-details">
+        content = (
+          <>
             <p><strong>Fasilitator:</strong> {details.facilitatorNames?.join(', ') || 'N/A'}</p>
             <p><strong>Lokasi:</strong> {details.isOnline ? <a href={details.videoConferenceUrl} target="_blank" rel="noopener noreferrer">Online</a> : details.locationAddress || 'N/A'}</p>
-          </div>
+          </>
         );
+        break;
       case 'Competition':
-        return (
-          <div className="program-specific-details">
+        content = (
+          <>
             <p><strong>Host:</strong> {details.hostName || 'N/A'}</p>
             <p><strong>Total Hadiah:</strong> Rp {details.totalPrize?.toLocaleString('id-ID') || '0'}</p>
             <p><strong>Lokasi:</strong> {details.isOnline ? 'Online' : details.locationAddress || 'N/A'}</p>
             {details.contestRoomUrl && <p><strong>Ruang Lomba:</strong> <a href={details.contestRoomUrl} target="_blank" rel="noopener noreferrer">Link Lomba</a></p>}
-          </div>
+          </>
         );
+        break;
       default:
         return null;
     }
+    return (
+      <div className="program-specific-details">
+        <h3>Detail {program.type}</h3>
+        {content}
+      </div>
+    );
   }
 
   return (
@@ -238,12 +269,31 @@ const MateriDetailPage = () => {
         </div>
         
         <div className="program-meta-details">
+          <h3>Detail Program</h3>
           <p><strong>Jenis Program:</strong> {program?.type}</p>
           <p><strong>Tanggal:</strong> {formatDate(program?.availableDate)}</p>
-          {renderProgramSpecificDetails()}
         </div>
+        {renderProgramSpecificDetails()}
 
-        {program?.type !== 'Course' && enrollmentStatus !== 'completed' && enrollmentStatus !== 'unpaid' && (
+        {enrollmentStatus === 'completed' ? (
+             <div className="mark-complete-section">
+                {certificateForCompletedProgram ? (
+                  <button 
+                    onClick={() => setShowCertificateModal(true)} 
+                    className="mark-complete-button"
+                    style={{ backgroundColor: '#3f72af' }} // Use a different color for certificate button
+                  >
+                    Lihat Sertifikat
+                  </button>
+                ) : (
+                  <p style={{color: '#22c55e', fontWeight: 'bold'}}>Program ini telah selesai! (Sertifikat tidak ditemukan)</p>
+                )}
+            </div>
+        ) : enrollmentStatus === 'unpaid' ? (
+             <div className="mark-complete-section">
+                <p style={{color: 'orange', fontWeight: 'bold'}}>Program ini belum dibayar. Mohon selesaikan pembayaran.</p>
+            </div>
+        ) : (program?.type !== 'Course' && enrollmentStatus !== 'completed') && (
             <div className="mark-complete-section">
                 <button 
                     onClick={handleMarkAsComplete} 
@@ -252,16 +302,6 @@ const MateriDetailPage = () => {
                 >
                     {markAsCompleteLoading ? 'Menandai Selesai...' : 'Tandai Selesai'}
                 </button>
-            </div>
-        )}
-        {program?.type !== 'Course' && enrollmentStatus === 'completed' && (
-             <div className="mark-complete-section">
-                <p style={{color: '#22c55e', fontWeight: 'bold'}}>Program ini telah selesai!</p>
-            </div>
-        )}
-        {program?.type !== 'Course' && enrollmentStatus === 'unpaid' && (
-             <div className="mark-complete-section">
-                <p style={{color: 'orange', fontWeight: 'bold'}}>Program ini belum dibayar. Mohon selesaikan pembayaran.</p>
             </div>
         )}
 
@@ -280,6 +320,35 @@ const MateriDetailPage = () => {
       </div>
       <ProfileBar />
       <ToastContainer position="top-center" autoClose={3000} />
+
+      {/* Certificate Viewer Modal for Completed Non-Course Programs */}
+      {showCertificateModal && certificateForCompletedProgram && (
+        <div className="modal-overlay" onClick={() => setShowCertificateModal(false)}>
+          <div className="modal-box certificate-viewer-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ textAlign: 'center', marginBottom: '15px' }}>Detail Sertifikat</h3>
+            <div className="certificate-detail-content">
+              <p><strong>Judul Sertifikat:</strong> {certificateForCompletedProgram.title}</p>
+              <p><strong>Program:</strong> {certificateForCompletedProgram.programTitle} ({certificateForCompletedProgram.programType})</p>
+              <p><strong>Credential ID:</strong> {certificateForCompletedProgram.credential}</p>
+              <p><strong>Diterbitkan Pada:</strong> {formatDate(certificateForCompletedProgram.issuedAt)}</p>
+              {certificateForCompletedProgram.programType === 'Course' && certificateForCompletedProgram.expiredAt && (
+                <p><strong>Kedaluwarsa Pada:</strong> {formatDate(certificateForCompletedProgram.expiredAt)}</p>
+              )}
+            </div>
+            
+            <div className="modal-actions" style={{justifyContent: 'center', marginTop: '20px'}}>
+              {certificateForCompletedProgram.documentUrl && (
+                <a href={certificateForCompletedProgram.documentUrl} target="_blank" rel="noopener noreferrer" className="admin-btn add">
+                  Lihat Dokumen
+                </a>
+              )}
+              <button className="admin-btn delete" onClick={() => setShowCertificateModal(false)}>
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -182,3 +182,50 @@
   text-align: center;
 }
 
+
+/* Styling for modal buttons within ProgramPage */
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.modal-buttons .pay,
+.modal-buttons-column .pay {
+  background-color: #3b82f6; /* Blue color */
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.modal-buttons .pay:hover,
+.modal-buttons-column .pay:hover {
+  background-color: #2563eb; /* Darker blue on hover */
+  transform: scale(1.05);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+}
+
+.modal-buttons .close,
+.modal-buttons-column .close {
+  background-color: #ef4444; /* Red color */
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.modal-buttons .close:hover,
+.modal-buttons-column .close:hover {
+  background-color: #dc2626; /* Darker red on hover */
+  transform: scale(1.05);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+}
+
