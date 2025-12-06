@@ -1,64 +1,80 @@
 import React, { useState, useEffect } from 'react';
-import DatePicker, { registerLocale } from 'react-datepicker';
-import id from 'date-fns/locale/id';
-import 'react-datepicker/dist/react-datepicker.css';
 import './admin.css';
-
-registerLocale('id', id);
+import api from '../services/api';
+import { toast } from 'react-toastify';
 
 const AddCertificateModal = ({ onClose, onSave, defaultData }) => {
-  const [nama, setNama] = useState('');
-  const [tanggal, setTanggal] = useState(null); // simpan Date object
+  const [formData, setFormData] = useState({
+    title: '',
+    enrollmentId: '',
+  });
 
   useEffect(() => {
     if (defaultData) {
-      setNama(defaultData.nama || '');
-
-      if (defaultData.tanggal) {
-        const d = new Date(defaultData.tanggal);
-        setTanggal(isNaN(d) ? null : d);
-      } else {
-        setTanggal(null);
-      }
+      setFormData({
+        title: defaultData.title || '',
+        enrollmentId: defaultData.enrollmentId || '',
+      });
     } else {
-      setNama('');
-      setTanggal(null);
+      setFormData({
+        title: '',
+        enrollmentId: '',
+      });
     }
   }, [defaultData]);
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const data = {
-      nama,
-      tanggal: tanggal ? tanggal.toISOString().split('T')[0] : '',
+    const certificateData = {
+      title: formData.title,
+      enrollmentId: Number(formData.enrollmentId),
     };
-    onSave(data);
-    onClose();
+
+    try {
+      if (defaultData) {
+        await api.patch(`/certificates/${defaultData.id}`, { title: certificateData.title });
+        toast.success("Sertifikat berhasil diperbarui.");
+      } else {
+        await api.post('/certificates', certificateData);
+        toast.success("Sertifikat berhasil ditambahkan.");
+      }
+      onSave();
+      onClose();
+    } catch (err) {
+      console.error("Failed to save certificate:", err);
+      toast.error(err.response?.data?.message || "Gagal menyimpan sertifikat.");
+    }
   };
 
   return (
     <div className="modal-overlay">
       <div className="modal-content">
         <h2>{defaultData ? 'Update Sertifikat' : 'Tambah Sertifikat Baru'}</h2>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="modal-form">
           <label>Nama Sertifikat</label>
           <input
             type="text"
-            value={nama}
-            onChange={(e) => setNama(e.target.value)}
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
             required
             className="input-text"
           />
 
-          <label>Tanggal Terbit</label>
-          <DatePicker
-            selected={tanggal}
-            onChange={(date) => setTanggal(date)}
-            dateFormat="dd MMMM yyyy"
-            locale="id"
-            placeholderText="Pilih tanggal"
+          <label>Enrollment ID</label>
+          <input
+            type="number"
+            name="enrollmentId"
+            value={formData.enrollmentId}
+            onChange={handleChange}
             required
             className="input-text"
+            disabled={!!defaultData} // Disable when editing
           />
 
           <div className="modal-actions">
