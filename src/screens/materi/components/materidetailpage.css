@@ -50,6 +50,111 @@ body {
   font-weight: 700;
 }
 
+/* Styling for Program Meta and Specific Details */
+.program-meta-details {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #e0e7ef;
+}
+
+.program-meta-details p {
+  margin-bottom: 8px;
+  font-size: 1rem;
+  color: #333;
+}
+
+.program-meta-details strong {
+  color: #0d3b66;
+  margin-right: 5px;
+}
+
+.program-specific-details {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #e0e7ef;
+}
+
+.program-specific-details h3 {
+  font-size: 1.2rem;
+  color: #0d3b66;
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+.program-specific-details p {
+  margin-bottom: 8px;
+  font-size: 1rem;
+  color: #333;
+}
+
+.program-specific-details strong {
+  color: #0d3b66;
+  margin-right: 5px;
+}
+
+.program-specific-details a {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.program-specific-details a:hover {
+  text-decoration: underline;
+}
+
+/* Mark as Complete Section */
+.mark-complete-section {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #e0e7ef;
+    display: flex; /* Use flexbox for alignment */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+}
+
+.mark-complete-section p {
+    margin: 0; /* Remove default paragraph margin */
+    font-size: 1.1em;
+    color: #0d3b66;
+    font-weight: 500;
+}
+
+.mark-complete-button {
+    background-color: #22c55e; /* Green color */
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3);
+}
+
+.mark-complete-button:hover:not(:disabled) {
+    background-color: #16a34a; /* Darker green on hover */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(34, 197, 94, 0.4);
+}
+
+.mark-complete-button:disabled {
+    background-color: #a0a0a0;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+
 /* Tombol kembali */
 .back-button {
   background-color: #ef4444;
@@ -60,7 +165,7 @@ body {
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
-  margin-top: 40px;
+  margin-top: 40px; /* Adjust as needed */
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
@@ -104,16 +209,27 @@ body {
   margin-top: 10px;
 }
 
-.modul-image {
-  max-width: 100%;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+.youtube-embed {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  padding-top: 56.25%; /* 16:9 Aspect Ratio */
+  margin-top: 1rem;
 }
 
-.youtube-thumbnail {
-  border-radius: 8px;
-  transition: transform 0.2s;
+.youtube-embed iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none; /* Remove default border */
+  border-radius: 8px; /* Optional: adds rounded corners */
 }
-.youtube-thumbnail:hover {
-  transform: scale(1.02);
+
+.completed-icon {
+  color: #22c55e; /* green-500 */
+  margin-left: 10px;
+  vertical-align: middle;
 }
+

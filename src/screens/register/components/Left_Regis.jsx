@@ -1,58 +1,47 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './left_regis.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import api from '../../../services/api';
 
 const Left_Regis = () => {
+  const navigate = useNavigate();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validasi input
-    if (!fullName.trim()) {
-      toast.error('Nama tidak boleh kosong!');
+    if (!fullName.trim() || !email.trim() || !password || !confirmPassword) {
+      toast.error('Semua kolom wajib diisi!');
       return;
     }
-    if (!email.trim()) {
-      toast.error('Email tidak boleh kosong!');
-      return;
-    }
-    if (!password) {
-      toast.error('Password tidak boleh kosong!');
+    if (password !== confirmPassword) {
+      toast.error('Password dan konfirmasi password tidak cocok!');
       return;
     }
 
-    // Kirim data ke backend
+    setLoading(true);
     try {
-      const response = await fetch('http://localhost/react-backend/register.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: fullName,
-          email: email,
-          password: password,
-        }),
+      await api.post('/auth/register', {
+        fullName,
+        email,
+        password,
       });
 
-      const result = await response.json();
-
-      if (result.success) {
-        toast.success('Registrasi berhasil!');
-        setFullName('');
-        setEmail('');
-        setPassword('');
-      } else {
-        toast.error(result.message || 'Registrasi gagal!');
-      }
+      toast.success('Registrasi berhasil! Silakan login.');
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
     } catch (error) {
-      toast.error('Terjadi kesalahan saat menghubungi server!');
-      console.error(error);
+      const errorMessage = error.response?.data?.errors?.[0]?.message || error.response?.data?.message || 'Registrasi gagal.';
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,20 +56,32 @@ const Left_Regis = () => {
             placeholder="Full Name"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
+            disabled={loading}
           />
           <input
             type="email"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            disabled={loading}
           />
           <input
             type="password"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled={loading}
           />
-          <button type="submit" className="submit-btn">Submit</button>
+          <input
+            type="password"
+            placeholder="Confirm Password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            disabled={loading}
+          />
+          <button type="submit" className="submit-btn" disabled={loading}>
+            {loading ? 'Submitting...' : 'Submit'}
+          </button>
         </form>
 
         <p className="signin-link">

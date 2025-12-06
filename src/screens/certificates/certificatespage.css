@@ -87,19 +87,100 @@
   font-size: 14px;
 }
 
+.certificate-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
 .download-button {
-  align-self: flex-start;
-  background-color: #4d9ef7;
-  color: #ffffff;
-  padding: 8px 14px;
+  background-color: #4d9ef7; /* A blue color */
+  color: white;
+  padding: 8px 15px;
   border: none;
   border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
   cursor: pointer;
+  font-weight: 600;
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .download-button:hover {
-  background-color: #2563eb;
+  background-color: #2563eb; /* Darker blue on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(77, 158, 247, 0.3);
 }
+
+.view-button {
+  background-color: #3f72af; /* Another blue color for view button */
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.view-button:hover {
+  background-color: #316394; /* Darker blue on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(63, 114, 175, 0.3);
+}
+
+/* Modal Close Button */
+.modal-close-btn {
+  background-color: #ef4444; /* Red color */
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.modal-close-btn:hover {
+  background-color: #dc2626; /* Darker red on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+
+/* General Admin Button Styles (used by 'Lihat Dokumen' button in modal) */
+.admin-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.admin-btn.add {
+  background-color: #3f72af;
+  color: white;
+}
+.admin-btn.add:hover {
+  background-color: #316394;
+  transform: scale(1.05);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+}
+
+.admin-btn.delete {
+  background-color: #ef4444;
+  color: white;
+}
+.admin-btn.delete:hover {
+  background-color: #dc2626;
+  transform: scale(1.05);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+}
+
+/* Modal Actions alignment */
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
