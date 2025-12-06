@@ -490,3 +490,52 @@
   font-weight: 600;
 }
 
+
+/* Styles for comments management modal */
+.comment-item {
+  background-color: #f8fafc;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.comment-item .comment-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.comment-item .comment-header strong {
+  color: #0d3b66;
+}
+
+.comment-item .comment-time {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.comment-item .comment-actions {
+  display: flex;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.comment-item .modal-form textarea {
+  width: 100%;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+
+/* Styling for 'Replied to comment #xx' info */
+.replied-to-info {
+  font-size: 0.85rem;
+  color: #666;
+  margin-left: 10px;
+  margin-bottom: 5px;
+  border-left: 2px solid #ccc;
+  padding-left: 5px;
+}
+

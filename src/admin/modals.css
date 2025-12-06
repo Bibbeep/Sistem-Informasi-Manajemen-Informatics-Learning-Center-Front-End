@@ -38,8 +38,13 @@
   max-height: 95vh; /* Allow it to take more vertical space */
   aspect-ratio: 16 / 9; /* Enforce a widescreen aspect ratio */
   padding: 24px; /* Maintain padding */
-  /* Remove overflow: hidden; from .modal-box if it causes issues with iframe */
-  /* Re-add specific overflow rules if needed after testing */
+}
+
+/* Specific styles for the Comments Management Modal */
+.comments-modal-box {
+  width: 90%; /* Use percentage for responsiveness */
+  max-width: 1000px; /* Use px for a guaranteed wider size */
+  max-height: 90vh;
 }
 
 /* General modal content styling */
