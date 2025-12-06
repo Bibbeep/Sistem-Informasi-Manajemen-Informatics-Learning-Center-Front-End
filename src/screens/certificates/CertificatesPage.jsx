@@ -4,6 +4,7 @@ import Sidebar from '../sidebar/Sidebar';
 import ProfileBar from '../profilebar/ProfileBar';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import '../../admin/modals.css'; // Import modal styles
 
 const CertificateImage = ({ src, alt }) => {
   const [imgSrc, setImgSrc] = useState(src);
@@ -27,6 +28,22 @@ const CertificatesPage = () => {
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [showModal, setShowModal] = useState(false); // State for modal visibility
+  const [selectedCert, setSelectedCert] = useState(null); // State for the certificate to view
+  const [showDocumentView, setShowDocumentView] = useState(false); // New state to toggle between details and document iframe
+
+  const handleView = (cert) => {
+    setSelectedCert(cert);
+    setShowModal(true);
+    setShowDocumentView(false); // Always start with details view
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedCert(null);
+    setShowDocumentView(false); // Reset document view state
+  };
+
 
   const fetchCertificates = async (currentPage, isInitialLoad = false) => {
     if (!user || !user.sub) {
@@ -124,16 +141,22 @@ const CertificatesPage = () => {
                 <div className="certificate-card" key={cert.id}>
                   <CertificateImage src={cert.programThumbnailUrl} alt={cert.title} />
                   <div className="certificate-content">
-                                      <h3>{cert.title}</h3>
-                                      <p>Issued: {formatDateString(cert.issuedAt)}</p>
-                                      {cert.programType === 'Course' && cert.expiredAt && (
-                                        <p>Expires: {formatDateString(cert.expiredAt)}</p>
-                                      )}
-                                      {cert.documentUrl && (
-                                        <a href={cert.documentUrl} target="_blank" rel="noopener noreferrer" className="download-button">
-                                          Download
-                                        </a>
-                                      )}                  </div>
+                    <h3>{cert.title}</h3>
+                    <p>Issued: {formatDateString(cert.issuedAt)}</p>
+                    {cert.programType === 'Course' && cert.expiredAt && (
+                      <p>Expires: {formatDateString(cert.expiredAt)}</p>
+                    )}
+                    <div className="certificate-actions">
+                      <button onClick={() => handleView(cert)} className="view-button">
+                        Lihat Detail
+                      </button>
+                      {cert.documentUrl && (
+                        <a href={cert.documentUrl} target="_blank" rel="noopener noreferrer" className="download-button">
+                          Download
+                        </a>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ))
             ) : (
@@ -148,6 +171,54 @@ const CertificatesPage = () => {
         </div>
       </div>
       <ProfileBar />
+
+      {showModal && selectedCert && (
+        <div className="modal-overlay" onClick={handleCloseModal}>
+          <div className="modal-box certificate-viewer-modal" onClick={(e) => e.stopPropagation()}>
+            {!showDocumentView ? (
+              <>
+                <h3 style={{ textAlign: 'center', marginBottom: '15px' }}>Detail Sertifikat</h3>
+                <div className="certificate-detail-content">
+                  <p><strong>Judul Sertifikat:</strong> {selectedCert.title}</p>
+                  <p><strong>Program:</strong> {selectedCert.programTitle} ({selectedCert.programType})</p>
+                  <p><strong>Credential ID:</strong> {selectedCert.credential}</p>
+                  <p><strong>Diterbitkan Pada:</strong> {formatDateString(selectedCert.issuedAt)}</p>
+                  {selectedCert.programType === 'Course' && selectedCert.expiredAt && (
+                    <p><strong>Kedaluwarsa Pada:</strong> {formatDateString(selectedCert.expiredAt)}</p>
+                  )}
+                </div>
+                <div className="modal-actions" style={{justifyContent: 'center', marginTop: '20px'}}>
+                  {selectedCert.documentUrl && (
+                    <button className="admin-btn add" onClick={() => setShowDocumentView(true)}>
+                      Lihat Dokumen
+                    </button>
+                  )}
+                  <button className="admin-btn delete" onClick={handleCloseModal}>
+                    Tutup
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 style={{ textAlign: 'center', marginBottom: '15px' }}>Dokumen Sertifikat</h3>
+                {selectedCert.documentUrl ? (
+                  <iframe src={selectedCert.documentUrl} width="100%" height="100%" style={{border: 'none'}} title={selectedCert.title}></iframe>
+                ) : (
+                  <p>No document available for this certificate.</p>
+                )}
+                <div className="modal-actions" style={{justifyContent: 'center', marginTop: '20px'}}>
+                  <button className="admin-btn add" onClick={() => setShowDocumentView(false)}>
+                    Kembali ke Detail
+                  </button>
+                  <button className="admin-btn delete" onClick={handleCloseModal}>
+                    Tutup
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

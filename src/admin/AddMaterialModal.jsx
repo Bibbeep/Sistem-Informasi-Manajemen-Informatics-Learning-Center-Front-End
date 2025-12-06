@@ -1,55 +1,75 @@
 import React, { useState, useEffect } from 'react';
 import './admin.css';
+import './modals.css'; // Import the new modal styles
+import api from '../services/api';
+import { toast } from 'react-toastify';
 
 const AddMaterialModal = ({ onClose, onSave, defaultData, programId }) => {
-  const [moduleNumber, setModuleNumber] = useState('');
-  const [youtubeLink, setYoutubeLink] = useState('');
+  const [formData, setFormData] = useState({
+    numberCode: '',
+    youtubeUrl: '',
+  });
 
   useEffect(() => {
     if (defaultData) {
-      setModuleNumber(defaultData.module_number || '');
-      setYoutubeLink(defaultData.youtube_link || '');
+      setFormData({
+        numberCode: defaultData.numberCode || '',
+        youtubeUrl: defaultData.youtubeUrl || '',
+      });
     } else {
-      setModuleNumber('');
-      setYoutubeLink('');
+      setFormData({
+        numberCode: '',
+        youtubeUrl: '',
+      });
     }
   }, [defaultData]);
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!moduleNumber || !youtubeLink) {
-      alert('Nomor modul dan link YouTube harus diisi!');
+    if (!formData.numberCode || !formData.youtubeUrl) {
+      toast.error('Nomor modul dan link YouTube harus diisi!');
       return;
     }
 
-    // Optional: Validasi sederhana YouTube link
-    const ytRegex = /(youtube\.com|youtu\.be)/;
-    if (!ytRegex.test(youtubeLink)) {
-      alert('Link harus berupa URL YouTube yang valid!');
-      return;
-    }
+    const moduleData = {
+      numberCode: Number(formData.numberCode),
+      youtubeUrl: formData.youtubeUrl,
+    };
 
-    onSave({
-      id: defaultData ? defaultData.id : undefined,
-      program_id: programId,
-      module_number: Number(moduleNumber), // pastikan tipe number
-      youtube_link: youtubeLink.trim(),
-    });
+    try {
+      if (defaultData) {
+        await api.patch(`/programs/${programId}/modules/${defaultData.id}`, moduleData);
+        toast.success("Modul berhasil diperbarui.");
+      } else {
+        await api.post(`/programs/${programId}/modules`, moduleData);
+        toast.success("Modul berhasil ditambahkan.");
+      }
+      onSave(); // Refresh the module list
+      onClose();
+    } catch (err) {
+      console.error("Failed to save module:", err);
+      toast.error(err.response?.data?.message || "Gagal menyimpan modul.");
+    }
   };
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content">
+      <div className="modal-box">
         <h2>{defaultData ? 'Update Modul' : 'Tambah Modul'}</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Nomor Modul</label>
             <input
               type="number"
+              name="numberCode"
               min="1"
-              value={moduleNumber}
-              onChange={(e) => setModuleNumber(e.target.value)}
+              value={formData.numberCode}
+              onChange={handleChange}
               placeholder="Contoh: 1"
               required
             />
@@ -58,9 +78,10 @@ const AddMaterialModal = ({ onClose, onSave, defaultData, programId }) => {
             <label>Link YouTube</label>
             <input
               type="text"
+              name="youtubeUrl"
               placeholder="https://youtube.com/..."
-              value={youtubeLink}
-              onChange={(e) => setYoutubeLink(e.target.value)}
+              value={formData.youtubeUrl}
+              onChange={handleChange}
               required
             />
           </div>
