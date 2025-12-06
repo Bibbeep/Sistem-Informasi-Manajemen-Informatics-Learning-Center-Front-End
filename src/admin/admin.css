@@ -291,36 +291,38 @@
 
 
 /* Styles for filter and pagination controls in admin pages */
-.admin-pagination {
+.admin-filter-controls {
+  margin-bottom: 20px;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 20px;
   gap: 10px;
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
 }
 
-.admin-pagination button {
-  background-color: #4d9ef7;
-  color: white;
-  border: none;
+.admin-filter-btn {
+  background-color: #f0f2f5;
+  border: 1px solid #e0e0e0; /* Softer border */
   padding: 8px 16px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  transition: background-color 0.2s ease;
+  color: #333; /* Darker text for better contrast */
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* Subtle shadow */
 }
 
-.admin-pagination button:hover:not(:disabled) {
-  background-color: #2563eb;
+.admin-filter-btn:hover:not(.active) {
+  background-color: #e6f0ff; /* Lighter blue on hover */
+  border-color: #4d9ef7; /* Blue border on hover */
+  transform: translateY(-2px); /* Slight lift */
+  box-shadow: 0 2px 8px rgba(77, 158, 247, 0.2); /* More pronounced shadow */
 }
 
-.admin-pagination button:disabled {
-  background-color: #a0c3e6;
-  cursor: not-allowed;
-}
-
-.admin-pagination span {
-  font-weight: 600;
+.admin-filter-btn.active {
+  background-color: #4d9ef7; /* Solid blue for active */
+  color: white;
+  border-color: #4d9ef7;
+  transform: translateY(-2px); /* Maintain lift for active state */
+  box-shadow: 0 2px 8px rgba(77, 158, 247, 0.4); /* Stronger shadow for active state */
 }
 
 
@@ -416,5 +418,75 @@
 
 .feedback-details-content strong {
   color: #0d3b66;
+}
+
+
+/* Styles for filter and pagination controls in admin pages */
+.admin-filter-controls {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+/* Specific styles for filter buttons */
+.admin-filter-controls .admin-filter-btn {
+  background-color: #f0f2f5;
+  border: 1px solid #e0e0e0; /* Softer border */
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #333; /* Darker text for better contrast */
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* Subtle shadow */
+}
+
+.admin-filter-controls .admin-filter-btn:hover:not(.active) {
+  background-color: #e6f0ff; /* Lighter blue on hover */
+  border-color: #4d9ef7; /* Blue border on hover */
+  transform: translateY(-2px); /* Slight lift */
+  box-shadow: 0 2px 8px rgba(77, 158, 247, 0.2); /* More pronounced shadow */
+}
+
+.admin-filter-controls .admin-filter-btn.active {
+  background-color: #4d9ef7; /* Solid blue for active */
+  color: white;
+  border-color: #4d9ef7;
+  transform: translateY(-2px); /* Maintain lift for active state */
+  box-shadow: 0 2px 8px rgba(77, 158, 247, 0.4); /* Stronger shadow for active state */
+}
+
+/* Original styles for admin-pagination buttons */
+.admin-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  gap: 10px;
+}
+
+.admin-pagination button {
+  background-color: #4d9ef7;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+.admin-pagination button:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.admin-pagination button:disabled {
+  background-color: #a0c3e6;
+  cursor: not-allowed;
+}
+
+.admin-pagination span {
+  font-weight: 600;
 }
 
