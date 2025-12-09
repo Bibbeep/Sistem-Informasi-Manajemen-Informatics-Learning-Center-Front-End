@@ -5,6 +5,7 @@ import ProfileBar from '../profilebar/ProfileBar';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import StatusFilter from './components/StatusFilter';
 
 // Mapping gambar berdasarkan tipe (for fallback)
 const typeImageMap = {
@@ -20,6 +21,7 @@ const MateriPage = () => {
   const [enrolledPrograms, setEnrolledPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'in progress', 'completed'
 
   useEffect(() => {
     const fetchEnrolledPrograms = async () => {
@@ -31,11 +33,19 @@ const MateriPage = () => {
 
       try {
         setLoading(true);
+
+        let statusParams;
+        if (statusFilter === 'all') {
+          statusParams = ['in progress', 'completed'];
+        } else {
+          statusParams = [statusFilter];
+        }
+
         const response = await api.get(`/enrollments`, {
           params: {
             userId: user.sub,
             limit: 100, // Fetch a large number of enrolled programs
-            status: ['in progress', 'completed'], // Fetch only 'in progress' and 'completed' statuses
+            status: statusParams,
           },
           paramsSerializer: params => {
             const parts = [];
@@ -64,7 +74,7 @@ const MateriPage = () => {
     };
 
     fetchEnrolledPrograms();
-  }, [user]);
+  }, [user, statusFilter]); // Refetch when user or statusFilter changes
 
   const handleNavigateToDetail = (programId) => {
     navigate(`/materi/detail/${programId}`);
@@ -126,6 +136,7 @@ const MateriPage = () => {
       <div className="materi-main">
         <div className="materi-container">
           <h2 className="materi-title">My Learnings</h2>
+          <StatusFilter selected={statusFilter} onSelect={setStatusFilter} />
           {renderContent()}
         </div>
       </div>
