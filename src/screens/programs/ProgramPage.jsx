@@ -40,6 +40,7 @@ const ProgramPage = () => {
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [showAvailableOnly, setShowAvailableOnly] = useState(false);
+  const [showUnenrolledOnly, setShowUnenrolledOnly] = useState(false);
   const [sortOption, setSortOption] = useState('id');
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [modalImgSrc, setModalImgSrc] = useState('');
@@ -209,6 +210,15 @@ const ProgramPage = () => {
             />
             <label htmlFor="showAvailableOnly">Available Only</label>
           </div>
+          <div className="filter-group checkbox-group">
+            <input
+              type="checkbox"
+              id="showUnenrolledOnly"
+              checked={showUnenrolledOnly}
+              onChange={(e) => setShowUnenrolledOnly(e.target.checked)}
+            />
+            <label htmlFor="showUnenrolledOnly">Unenrolled Only</label>
+          </div>
           <div className="filter-group">
             <label htmlFor="sortOption">Sort By:</label>
             <select id="sortOption" value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
@@ -227,21 +237,23 @@ const ProgramPage = () => {
 
         <div className="course-grid">
           {programs.length === 0 && !loading && <p>No programs found.</p>}
-          {programs.map((program) => {
-            const enrollment = enrolledProgramsData.find(e => e.programId === program.id);
-            return (
-              <CourseCard
-                key={program.id}
-                title={program.title}
-                type={program.type}
-                image={program.thumbnailUrl}
-                date={program.availableDate}
-                price={program.priceIdr}
-                description={program.description}
-                enrollmentStatus={enrollment ? enrollment.status : null} // Pass status string
-                onClick={() => setSelectedProgram(program)}
-              />
-            );
+          {programs
+            .filter(program => !showUnenrolledOnly || !enrolledProgramIds.has(program.id))
+            .map((program) => {
+              const enrollment = enrolledProgramsData.find(e => e.programId === program.id);
+              return (
+                <CourseCard
+                  key={program.id}
+                  title={program.title}
+                  type={program.type}
+                  image={program.thumbnailUrl}
+                  date={program.availableDate}
+                  price={program.priceIdr}
+                  description={program.description}
+                  enrollmentStatus={enrollment ? enrollment.status : null} // Pass status string
+                  onClick={() => setSelectedProgram(program)}
+                />
+              );
           })}
         </div>
 
