@@ -26,6 +26,7 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
   });
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [thumbnailFile, setThumbnailFile] = useState(null);
 
   useEffect(() => {
     if (defaultData) {
@@ -129,6 +130,29 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
     }
   };
 
+  const handleThumbnailUpload = async () => {
+    if (!thumbnailFile || !defaultData) {
+      toast.warn("Silakan pilih file thumbnail terlebih dahulu.");
+      return;
+    }
+    const thumbnailFormData = new FormData();
+    thumbnailFormData.append('thumbnail', thumbnailFile);
+
+    try {
+      await api.put(`/programs/${defaultData.id}/thumbnails`, thumbnailFormData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      toast.success("Thumbnail berhasil diunggah.");
+      onSave(); // Refresh the program list
+      setThumbnailFile(null); // Reset file input
+    } catch (err) {
+      console.error("Failed to upload thumbnail:", err);
+      toast.error("Gagal mengunggah thumbnail.");
+    }
+  };
+
   return (
     <div className="modal-overlay scroll-hidden">
       <div className="modal-box">
@@ -180,6 +204,26 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
               <input type="text" name="hostName" placeholder="Nama Host" value={formData.hostName} onChange={handleChange} />
               <input type="number" name="totalPrize" placeholder="Total Hadiah (Rp)" value={formData.totalPrize} onChange={handleChange} required min="0" step="1" />
             </>
+          )}
+
+          {defaultData && (
+            <div className="form-group thumbnail-upload-section">
+              <label className="form-label">Current Thumbnail</label>
+              <img src={defaultData.thumbnailUrl} alt="Current thumbnail" className="thumbnail-preview" />
+              <label htmlFor="thumbnail" className="form-label">Update Thumbnail</label>
+              <div className="thumbnail-controls">
+                <input 
+                  type="file" 
+                  id="thumbnail" 
+                  name="thumbnail" 
+                  onChange={(e) => setThumbnailFile(e.target.files[0])} 
+                  accept="image/png, image/jpeg, image/webp"
+                />
+                <button type="button" className="admin-btn" onClick={handleThumbnailUpload} disabled={!thumbnailFile}>
+                  Upload
+                </button>
+              </div>
+            </div>
           )}
 
                     <div className="modal-actions">

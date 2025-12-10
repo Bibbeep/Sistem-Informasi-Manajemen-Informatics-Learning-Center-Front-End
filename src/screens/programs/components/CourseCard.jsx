@@ -24,7 +24,7 @@ const typeImageMap = {
   Workshop: "/images/workshop_thumb.png",
 };
 
-const CourseCard = ({ title, type, image, date, price, description, onClick, isEnrolled }) => {
+const CourseCard = ({ title, type, image, date, price, description, onClick, enrollmentStatus }) => {
   const [imgSrc, setImgSrc] = useState(image);
 
   useEffect(() => {
@@ -38,6 +38,11 @@ const CourseCard = ({ title, type, image, date, price, description, onClick, isE
     }
   };
 
+  const getStatusClass = (status) => {
+    if (!status) return '';
+    return `status-${status.toLowerCase().replace(' ', '-')}`;
+  };
+
   return (
     <div className="course-card" onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
       <img
@@ -47,9 +52,12 @@ const CourseCard = ({ title, type, image, date, price, description, onClick, isE
         onError={handleImageError}
       />
       <div className="course-info">
-        <h3 className="course-title">
-          {title} {isEnrolled && <FaCheckCircle className="enrolled-icon" />}
-        </h3>
+        <h3 className="course-title">{title}</h3>
+        {enrollmentStatus && (
+          <span className={`status-tag ${getStatusClass(enrollmentStatus)}`}>
+            {enrollmentStatus}
+          </span>
+        )}
         <p className="course-description">
           <span>{description || '-'}</span>
         </p>
