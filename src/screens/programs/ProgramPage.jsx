@@ -227,19 +227,22 @@ const ProgramPage = () => {
 
         <div className="course-grid">
           {programs.length === 0 && !loading && <p>No programs found.</p>}
-          {programs.map((program) => (
-            <CourseCard
-              key={program.id}
-              title={program.title}
-              type={program.type}
-              image={program.thumbnailUrl}
-              date={program.availableDate}
-              price={program.priceIdr}
-              description={program.description}
-              isEnrolled={enrolledProgramIds.has(program.id)} // Pass enrollment status
-              onClick={() => setSelectedProgram(program)}
-            />
-          ))}
+          {programs.map((program) => {
+            const enrollment = enrolledProgramsData.find(e => e.programId === program.id);
+            return (
+              <CourseCard
+                key={program.id}
+                title={program.title}
+                type={program.type}
+                image={program.thumbnailUrl}
+                date={program.availableDate}
+                price={program.priceIdr}
+                description={program.description}
+                enrollmentStatus={enrollment ? enrollment.status : null} // Pass status string
+                onClick={() => setSelectedProgram(program)}
+              />
+            );
+          })}
         </div>
 
         {loading && programs.length === 0 && <p>Loading...</p>}
