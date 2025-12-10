@@ -22,18 +22,20 @@ const MateriPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'in progress', 'completed'
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
 
   useEffect(() => {
     const fetchEnrolledPrograms = async () => {
       if (!user || !user.sub) {
+        setEnrolledPrograms([]);
         setLoading(false);
         setError("User not logged in.");
         return;
       }
 
+      setLoading(true);
       try {
-        setLoading(true);
-
         let statusParams;
         if (statusFilter === 'all') {
           statusParams = ['in progress', 'completed'];
@@ -44,7 +46,8 @@ const MateriPage = () => {
         const response = await api.get(`/enrollments`, {
           params: {
             userId: user.sub,
-            limit: 100, // Fetch a large number of enrolled programs
+            limit: 9, // 3 rows of 3 cards
+            page: page,
             status: statusParams,
           },
           paramsSerializer: params => {
@@ -62,8 +65,11 @@ const MateriPage = () => {
             return parts.join('&');
           }
         });
-        const enrolled = response.data.data.enrollments;
-        setEnrolledPrograms(enrolled);
+
+        const { enrollments } = response.data.data;
+        const { pagination } = response.data;
+        setEnrolledPrograms(prev => (page === 1 ? enrollments : [...prev, ...enrollments]));
+        setHasMore(pagination.currentPage < pagination.totalPages);
         setError(null);
       } catch (err) {
         setError("Failed to load enrolled programs. Please try again.");
@@ -74,7 +80,19 @@ const MateriPage = () => {
     };
 
     fetchEnrolledPrograms();
-  }, [user, statusFilter]); // Refetch when user or statusFilter changes
+  }, [user, statusFilter, page]);
+
+  // Reset page and programs when filter changes
+  useEffect(() => {
+    setPage(1);
+    setEnrolledPrograms([]);
+  }, [statusFilter]);
+
+  const handleLoadMore = () => {
+    if (hasMore) {
+      setPage(prevPage => prevPage + 1);
+    }
+  };
 
   const handleNavigateToDetail = (programId) => {
     navigate(`/materi/detail/${programId}`);
@@ -85,7 +103,7 @@ const MateriPage = () => {
   };
 
   const renderContent = () => {
-    if (loading) {
+    if (loading && page === 1) {
       return <p style={{ color: 'white' }}>Loading your programs...</p>;
     }
 
@@ -98,35 +116,42 @@ const MateriPage = () => {
     }
 
     return (
-      <div className="materi-grid">
-        {enrolledPrograms.map(program => (
-          <div className="materi-card" key={program.id} onClick={() => handleNavigateToDetail(program.programId)}>
-            <img
-              src={getProgramImage(program)}
-              alt={program.programTitle}
-              className="materi-image"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = typeImageMap[program.programType] || "/images/default.png";
-              }}
-            />
-            <div className="materi-content">
-              <h3>{program.programTitle}</h3>
-              <p>Jenis: {program.programType}</p>
-              <div className="progress-bar-container">
-                <div 
-                  className="progress-bar" 
-                  style={{ width: `${parseFloat(program.progressPercentage).toFixed(0)}%` }}
-                ></div>
+      <>
+        <div className="materi-grid">
+          {enrolledPrograms.map(program => (
+            <div className="materi-card" key={program.id} onClick={() => handleNavigateToDetail(program.programId)}>
+              <img
+                src={getProgramImage(program)}
+                alt={program.programTitle}
+                className="materi-image"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = typeImageMap[program.programType] || "/images/default.png";
+                }}
+              />
+              <div className="materi-content">
+                <h3>{program.programTitle}</h3>
+                <p>Jenis: {program.programType}</p>
+                <div className="progress-bar-container">
+                  <div
+                    className="progress-bar"
+                    style={{ width: `${parseFloat(program.progressPercentage).toFixed(0)}%` }}
+                  ></div>
+                </div>
+                <p>Progress: {parseFloat(program.progressPercentage).toFixed(0)}%</p>
+                <button className="open-button">Continue</button>
               </div>
-              <p>Progress: {parseFloat(program.progressPercentage).toFixed(0)}%</p>
-              <button className="open-button">
-                Continue
-              </button>
             </div>
+          ))}
+        </div>
+        {hasMore && (
+          <div className="load-more-container">
+            <button onClick={handleLoadMore} disabled={loading} className="load-more-btn">
+              {loading ? 'Loading...' : 'Load More'}
+            </button>
           </div>
-        ))}
-      </div>
+        )}
+      </>
     );
   };
 
