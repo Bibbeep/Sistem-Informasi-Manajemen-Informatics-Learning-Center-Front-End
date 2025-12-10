@@ -96,16 +96,37 @@
 
 /* Tombol buka materi */
 .open-button {
-  align-self: flex-start;
-  background-color: #4d9ef7;
-  color: #ffffff;
-  padding: 8px 14px;
+  padding: 6px 12px;
+  background-color: #4f46e5;
+  color: white;
   border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
+  border-radius: 6px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  transition: background-color 0.3s;
+}
+
+.materi-buttons {
+  display: flex;
+  flex-wrap: wrap; /* Allows buttons to stack on smaller screens */
+  gap: 10px;
+  margin-top: 10px;
+  align-self: flex-start;
+}
+
+.certificate-button {
+  padding: 6px 12px;
+  background-color: #3f72af; /* Blue accent color */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.certificate-button:hover {
+  background-color: #316394;
 }
 
 .open-button:hover {

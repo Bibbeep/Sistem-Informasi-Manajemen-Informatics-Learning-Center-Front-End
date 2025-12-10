@@ -98,6 +98,11 @@ const MateriPage = () => {
     navigate(`/materi/detail/${programId}`);
   };
 
+  const handleGoToCertificate = (certificateId) => {
+    localStorage.setItem('selectedCertificateId', certificateId);
+    navigate('/certificates');
+  };
+
   const getProgramImage = (program) => {
     return program && program.programThumbnailUrl ? program.programThumbnailUrl : (typeImageMap[program.programType] || "/images/default.png");
   };
@@ -139,7 +144,18 @@ const MateriPage = () => {
                   ></div>
                 </div>
                 <p>Progress: {parseFloat(program.progressPercentage).toFixed(0)}%</p>
-                <button className="open-button">Continue</button>
+                <div className="materi-buttons">
+                  {program.status.toLowerCase() === 'completed' ? (
+                    <>
+                      <button className="open-button" onClick={(e) => { e.stopPropagation(); handleNavigateToDetail(program.programId); }}>Open</button>
+                      {program.certificateId && (
+                        <button className="certificate-button" onClick={(e) => { e.stopPropagation(); handleGoToCertificate(program.certificateId); }}>Certificate</button>
+                      )}
+                    </>
+                  ) : (
+                    <button className="open-button" onClick={(e) => { e.stopPropagation(); handleNavigateToDetail(program.programId); }}>Continue</button>
+                  )}
+                </div>
               </div>
             </div>
           ))}

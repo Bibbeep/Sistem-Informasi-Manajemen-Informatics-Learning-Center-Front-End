@@ -76,6 +76,24 @@ const CertificatesPage = () => {
   };
 
   useEffect(() => {
+    const certId = localStorage.getItem('selectedCertificateId');
+    if (certId) {
+      localStorage.removeItem('selectedCertificateId');
+      const fetchAndShowCertificate = async () => {
+        try {
+          const response = await api.get(`/certificates/${certId}`);
+          if (response.data.success) {
+            handleView(response.data.data.certificate);
+          }
+        } catch (error) {
+          console.error("Failed to fetch certificate by ID:", error);
+        }
+      };
+      fetchAndShowCertificate();
+    }
+  }, []); // Run only on mount
+
+  useEffect(() => {
     setCertificates([]); // Clear certificates on user change or initial mount
     setPage(1);
     fetchCertificates(1, true); // Fetch first page on mount or user change
