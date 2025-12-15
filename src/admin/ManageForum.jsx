@@ -143,7 +143,7 @@ const ManageForum = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="admin-search-input"
             />
-            <button type="submit" className="admin-btn">Cari</button>
+            <button type="submit" className="admin-btn add">Cari</button>
           </form>
         </div>
 
