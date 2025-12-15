@@ -27,9 +27,12 @@ export const AuthProvider = ({ children }) => {
     if (token) {
       try {
         const decodedUser = jwtDecode(token);
-        setUser(decodedUser);
-        // Fetch full user details immediately after setting basic user from token
-        fetchUserProfile(decodedUser.sub);
+        
+        // Fetch profile and then set a combined user object
+        fetchUserProfile(decodedUser.sub).then(profileData => {
+          setUser({ ...decodedUser, ...profileData });
+        });
+        
       } catch (error) {
         console.error("Invalid token:", error);
         localStorage.removeItem('accessToken');
@@ -46,11 +49,15 @@ export const AuthProvider = ({ children }) => {
       const { accessToken } = response.data.data;
       localStorage.setItem('accessToken', accessToken);
       const decodedUser = jwtDecode(accessToken);
-      setUser(decodedUser);
       
       // Fetch full user profile after successful login
       const fullProfile = await fetchUserProfile(decodedUser.sub);
-      return { user: decodedUser, profile: fullProfile };
+      
+      // Combine decoded token data with full profile data
+      const combinedUser = { ...decodedUser, ...fullProfile };
+      setUser(combinedUser);
+      
+      return { user: combinedUser }; // Return a single user object
     } catch (error) {
       // Clear any potential stale user data on login failure
       localStorage.removeItem('accessToken');
@@ -77,8 +84,6 @@ export const AuthProvider = ({ children }) => {
 
   const authValue = {
     user,
-    profile, // Expose profile
-    setProfile, // Expose setProfile for updates
     loading,
     login,
     logout,
