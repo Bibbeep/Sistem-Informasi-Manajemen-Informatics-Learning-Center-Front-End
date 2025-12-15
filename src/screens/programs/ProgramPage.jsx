@@ -35,7 +35,8 @@ const ProgramPage = () => {
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchKeyword, setSearchKeyword] = useState(''); // Holds current input value
+  const [ftsQuery, setFtsQuery] = useState(''); // Triggers FTS API call
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
@@ -50,7 +51,7 @@ const ProgramPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth(); // Get user from AuthContext
 
-  const debouncedSearchKeyword = useDebounce(searchKeyword, 500);
+  // Debounce only for price inputs, not for FTS query
   const debouncedMinPrice = useDebounce(minPrice, 500);
   const debouncedMaxPrice = useDebounce(maxPrice, 500);
 
@@ -110,7 +111,7 @@ const ProgramPage = () => {
         type: filter === 'All' ? 'all' : filter.toLowerCase(),
         limit: 10,
         page: currentPage,
-        title: debouncedSearchKeyword || undefined,
+        q: ftsQuery || undefined, // Use ftsQuery for full-text search
         'price.gte': debouncedMinPrice || undefined,
         'price.lte': debouncedMaxPrice || undefined,
         isAvailable: showAvailableOnly ? true : undefined,
@@ -143,7 +144,7 @@ const ProgramPage = () => {
     setPrograms([]);
     setPage(1);
     fetchPrograms(1, selectedFilter, true);
-  }, [debouncedSearchKeyword, selectedFilter, debouncedMinPrice, debouncedMaxPrice, showAvailableOnly, sortOption]);
+  }, [ftsQuery, selectedFilter, debouncedMinPrice, debouncedMaxPrice, showAvailableOnly, sortOption]); // Depend on ftsQuery
 
   const handleLoadMore = () => {
     const nextPage = page + 1;
@@ -151,8 +152,14 @@ const ProgramPage = () => {
     fetchPrograms(nextPage, selectedFilter);
   };
 
-  const handleSearch = (keyword) => {
+  const handleSearchChange = (keyword) => {
     setSearchKeyword(keyword);
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setFtsQuery(searchKeyword); // Trigger FTS query
+    setPage(1); // Reset page on new search
   };
 
   const handleFilterSelect = (filter) => {
@@ -178,7 +185,11 @@ const ProgramPage = () => {
     <div className="course-container">
       <Sidebar />
       <div className="course-content">
-        <DashboardHeader onSearch={handleSearch} />
+        <DashboardHeader 
+          searchKeyword={searchKeyword}
+          onSearchChange={handleSearchChange}
+          onSearchSubmit={handleSearchSubmit}
+        />
         
         <div className="program-filters">
           <div className="filter-group">

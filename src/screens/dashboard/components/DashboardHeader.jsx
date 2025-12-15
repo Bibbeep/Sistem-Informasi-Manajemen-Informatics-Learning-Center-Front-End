@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import './dashboardheader.css';
 
-const DashboardHeader = ({ onSearch }) => {
+const DashboardHeader = ({ searchKeyword, onSearchChange, onSearchSubmit }) => {
   const [userName, setUserName] = useState('User');
-  const [keyword, setKeyword] = useState('');
 
   useEffect(() => {
     const storedUser = localStorage.getItem('loggedInUser');
@@ -13,14 +12,6 @@ const DashboardHeader = ({ onSearch }) => {
     }
   }, []);
 
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setKeyword(value);
-    if (typeof onSearch === 'function') {
-      onSearch(value);
-    }
-  };
-
   return (
     <div className="dashboard-header">
       <div className="greeting">
@@ -28,20 +19,24 @@ const DashboardHeader = ({ onSearch }) => {
         <p>Welcome back! Get ready for today’s course</p>
       </div>
       <div className="search-bar-only">
-        <input
-          type="text"
-          placeholder="Search for course here"
-          value={keyword}
-          onChange={handleSearchChange}
-        />
-        <button><i className="fa fa-search"></i></button>
+        <form onSubmit={onSearchSubmit}>
+          <input
+            type="text"
+            placeholder="Search for course here"
+            value={searchKeyword}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
+          <button type="submit"><i className="fa fa-search"></i></button>
+        </form>
       </div>
     </div>
   );
 };
 
 DashboardHeader.defaultProps = {
-  onSearch: () => {},
+  searchKeyword: '',
+  onSearchChange: () => {},
+  onSearchSubmit: () => {},
 };
 
 export default DashboardHeader;

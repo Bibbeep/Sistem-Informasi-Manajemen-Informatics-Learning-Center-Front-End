@@ -19,10 +19,10 @@
 
 .search-bar-only {
   display: flex;
-  align-items: right;
-  flex-grow: 1;
+  align-items: center; /* Changed from right to center for vertical alignment */
   max-width: 330px;
   margin-top: 10px;
+  margin-left: auto; /* Pushes the search bar to the right */
 }
 
 .search-bar-only input {
