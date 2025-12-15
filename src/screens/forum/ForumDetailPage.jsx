@@ -399,8 +399,7 @@ const ForumDetailPage = () => {
           <Link to="/forum" className="back-to-forum-list">← Kembali ke Daftar Forum</Link>
           <h1 className="discussion-title">{discussion.title}</h1>
           <div className="discussion-meta">
-            Oleh: {authorName || 'Anonim'}
-            pada {formatDate(discussion.createdAt)}
+            Oleh: {authorName} pada {formatDate(discussion.createdAt)}
           </div>
           <div className="discussion-content">
             <p>{discussion.mainContent}</p>

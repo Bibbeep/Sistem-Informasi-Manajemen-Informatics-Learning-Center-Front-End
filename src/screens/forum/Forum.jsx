@@ -124,8 +124,7 @@ const Forum = () => {
                   <div className="forum-info">
                     <p className="forum-title">{discussion.title}</p>
                     <span className="forum-meta">
-                      Oleh: {discussion.authorName} 
-                      pada {new Date(discussion.createdAt).toLocaleDateString('id-ID')}
+                                            Oleh: {discussion.authorName} pada {new Date(discussion.createdAt).toLocaleDateString('id-ID')}
                     </span>
                   </div>
                 </div>

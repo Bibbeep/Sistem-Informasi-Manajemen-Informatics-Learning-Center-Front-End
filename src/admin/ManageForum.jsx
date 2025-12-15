@@ -73,9 +73,15 @@ const ManageForum = () => {
     setShowModal(true);
   };
 
-  const handleEdit = (discussion) => {
-    setEditData(discussion);
-    setShowModal(true);
+  const handleEdit = async (discussion) => {
+    try {
+      const response = await api.get(`/discussions/${discussion.id}`);
+      setEditData(response.data.data.discussion);
+      setShowModal(true);
+    } catch (err) {
+      console.error("Failed to fetch discussion details for edit:", err);
+      toast.error("Gagal memuat detail diskusi untuk diedit.");
+    }
   };
 
   const handleDelete = async (discussionId) => {
