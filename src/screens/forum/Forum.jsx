@@ -4,10 +4,12 @@ import './forum.css';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api'; // Import API service
 import { ToastContainer, toast } from 'react-toastify'; // For notifications
+import { useAuth } from '../../context/AuthContext'; // Import useAuth
+import AddDiscussionModal from './AddDiscussionModal'; // Import the new modal
 
 const Forum = () => {
   const navigate = useNavigate();
-  // const { user } = useAuth(); // Removed: Get user info for authentication
+  const { user } = useAuth(); // Get user info for authentication
   
   // State for forum list
   const [discussions, setDiscussions] = useState([]);
@@ -18,6 +20,7 @@ const Forum = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [sort] = useState('-createdAt'); // Default sort by newest
   const [searchQuery, setSearchQuery] = useState(''); // For search input
+  const [showAddModal, setShowAddModal] = useState(false); // State for Add Discussion Modal
 
   // Function to fetch discussions from API
   const fetchDiscussions = useCallback(async () => {
@@ -96,6 +99,15 @@ const Forum = () => {
           <div className="forum-header">
             <h2>Forum Diskusi</h2>
             <div className="forum-actions">
+              {user && ( // Only show button if user is authenticated
+                <button
+                  className="admin-btn add" // Reusing admin-btn styling for consistency
+                  onClick={() => setShowAddModal(true)}
+                  style={{ marginRight: '10px' }}
+                >
+                  Buat Diskusi Baru
+                </button>
+              )}
               <form onSubmit={handleSearchSubmit} className="forum-search">
                 <input
                   type="text"
@@ -151,6 +163,13 @@ const Forum = () => {
         </div>
       </div>
       <ToastContainer position="top-center" autoClose={3000} />
+
+      {showAddModal && (
+        <AddDiscussionModal
+          onClose={() => setShowAddModal(false)}
+          onSave={fetchDiscussions}
+        />
+      )}
     </div>
   );
 };
