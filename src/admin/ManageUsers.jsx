@@ -10,17 +10,21 @@ const ManageUsers = () => {
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchQuery, setSearchQuery] = useState(''); // State for search input
+  const [ftsQuery, setFtsQuery] = useState(''); // State for triggering FTS API call
 
-  const fetchUsers = useCallback(async () => {
+      const fetchUsers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.get('/users', {
-        params: {
-          page,
-          limit: 20,
-        },
-      });
+      const params = {
+        page,
+        limit: 20,
+      };
+      if (ftsQuery) { // Only add q if ftsQuery is not empty
+        params.q = ftsQuery;
+      }
+      const response = await api.get('/users', { params });
       setUsers(response.data.data.users);
       setTotalPages(response.data.pagination.totalPages);
     } catch (err) {
@@ -29,11 +33,17 @@ const ManageUsers = () => {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, ftsQuery]); // Re-fetch when page or ftsQuery changes
 
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setFtsQuery(searchQuery); // Set FTS query from current input
+    setPage(1); // Reset page on new search
+  };
 
   const handleDelete = async (userId) => {
     if (window.confirm("Apakah Anda yakin ingin menghapus pengguna ini?")) {
@@ -54,6 +64,19 @@ const ManageUsers = () => {
       <AdminSidebar />
       <div className="admin-page scroll-hidden" style={{ flex: 1 }}>
         <h1>Kelola Pengguna</h1>
+
+        <div className="admin-actions">
+          <form onSubmit={handleSearchSubmit} className="admin-search-form">
+            <input
+              type="text"
+              placeholder="Cari pengguna..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="admin-search-input"
+            />
+            <button type="submit" className="admin-btn">Cari</button>
+          </form>
+        </div>
 
         {loading ? (
           <p>Memuat pengguna...</p>
