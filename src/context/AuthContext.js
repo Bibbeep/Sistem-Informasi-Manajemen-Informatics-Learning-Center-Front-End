@@ -27,21 +27,21 @@ export const AuthProvider = ({ children }) => {
     if (token) {
       try {
         const decodedUser = jwtDecode(token);
-        
-        // Fetch profile and then set a combined user object
-        fetchUserProfile(decodedUser.sub).then(profileData => {
-          setUser({ ...decodedUser, ...profileData });
+        setUser(decodedUser);
+        fetchUserProfile(decodedUser.sub).finally(() => {
+          setLoading(false);
         });
-        
       } catch (error) {
         console.error("Invalid token:", error);
         localStorage.removeItem('accessToken');
         setUser(null);
         setProfile(null);
+        setLoading(false);
       }
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
-  }, [fetchUserProfile]); // fetchUserProfile is a dependency
+  }, [fetchUserProfile]);
 
   const login = async (email, password) => {
     try {
@@ -49,15 +49,11 @@ export const AuthProvider = ({ children }) => {
       const { accessToken } = response.data.data;
       localStorage.setItem('accessToken', accessToken);
       const decodedUser = jwtDecode(accessToken);
+      setUser(decodedUser);
       
       // Fetch full user profile after successful login
       const fullProfile = await fetchUserProfile(decodedUser.sub);
-      
-      // Combine decoded token data with full profile data
-      const combinedUser = { ...decodedUser, ...fullProfile };
-      setUser(combinedUser);
-      
-      return { user: combinedUser }; // Return a single user object
+      return { user: decodedUser, profile: fullProfile };
     } catch (error) {
       // Clear any potential stale user data on login failure
       localStorage.removeItem('accessToken');
@@ -84,6 +80,8 @@ export const AuthProvider = ({ children }) => {
 
   const authValue = {
     user,
+    profile, // Expose profile
+    setProfile, // Expose setProfile for updates
     loading,
     login,
     logout,
