@@ -24,6 +24,7 @@ const ForumDetailPage = () => {
   const { user, profile } = useAuth();
 
   const [discussion, setDiscussion] = useState(null);
+  const [authorName, setAuthorName] = useState('');
   const [comments, setComments] = useState([]);
   const [replies, setReplies] = useState({});
   const [loading, setLoading] = useState(true);
@@ -110,7 +111,13 @@ const ForumDetailPage = () => {
   const fetchDiscussionMetadata = useCallback(async () => {
     try {
       const response = await api.get(`/discussions/${id}`);
-      setDiscussion(response.data.data.discussion);
+      const discussionData = response.data.data.discussion;
+      setDiscussion(discussionData);
+
+      if (discussionData.userId) {
+        const userResponse = await api.get(`/users/${discussionData.userId}`);
+        setAuthorName(userResponse.data.data.user.fullName);
+      }
     } catch (err) {
       console.error("Failed to fetch discussion metadata:", err);
       setError("Failed to load discussion metadata.");
@@ -372,15 +379,15 @@ const ForumDetailPage = () => {
           <Link to="/forum" className="back-to-forum-list">← Kembali ke Daftar Forum</Link>
           <h1 className="discussion-title">{discussion.title}</h1>
           <div className="discussion-meta">
-            Oleh: {discussion.authorName || 'Anonim'} ({discussion.programType || 'Umum'})
+            Oleh: {authorName || 'Anonim'}
             pada {formatDate(discussion.createdAt)}
           </div>
           <div className="discussion-content">
-            <p>Konten diskusi utama tidak tersedia melalui API ini.</p>
+            <p>{discussion.mainContent}</p>
           </div>
           <hr className="discussion-divider" />
           <div className="comment-section">
-            <h3>Komentar ({discussion.commentsCount})</h3>
+            <h3>Komentar</h3>
             <form onSubmit={(e) => { e.preventDefault(); handleSubmit(newCommentText, null); }} className="comment-form">
               <textarea
                 placeholder="Tulis komentar baru..."

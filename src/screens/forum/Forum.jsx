@@ -128,10 +128,6 @@ const Forum = () => {
                       pada {new Date(discussion.createdAt).toLocaleDateString('id-ID')}
                     </span>
                   </div>
-                  <div className="forum-stats">
-                    <div className="comment-count">{discussion.commentsCount} Komentar</div>
-                    {/* Add unread badge logic here if needed */}
-                  </div>
                 </div>
               ))
             )}
