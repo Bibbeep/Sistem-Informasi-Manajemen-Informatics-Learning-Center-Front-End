@@ -35,8 +35,26 @@ const ManageForum = () => {
           sort: '-createdAt',
         },
       });
-      setDiscussions(response.data.data.discussions);
-      setTotalPages(response.data.pagination.totalPages);
+      const { discussions } = response.data.data;
+      const { pagination } = response.data;
+
+      const discussionsWithAuthors = await Promise.all(
+        discussions.map(async (discussion) => {
+          try {
+            const userResponse = await api.get(`/users/${discussion.userId}`);
+            return {
+              ...discussion,
+              authorName: userResponse.data.data.user.fullName,
+            };
+          } catch (err) {
+            console.error(`Failed to fetch user for discussion ${discussion.id}:`, err);
+            return { ...discussion, authorName: 'Unknown' };
+          }
+        })
+      );
+
+      setDiscussions(discussionsWithAuthors);
+      setTotalPages(pagination.totalPages);
     } catch (err) {
       console.error("Failed to fetch discussions:", err);
       setError("Gagal memuat data forum.");
@@ -113,7 +131,6 @@ const ManageForum = () => {
                   <th>Judul Forum</th>
                   <th>Penulis</th>
                   <th>Tanggal Dibuat</th>
-                  <th>Jumlah Komentar</th>
                   <th>Aksi</th>
                 </tr>
               </thead>
@@ -122,9 +139,8 @@ const ManageForum = () => {
                   discussions.map((discussion) => (
                     <tr key={discussion.id}>
                       <td>{discussion.title}</td>
-                      <td>{discussion.authorName || 'Anonim'}</td>
+                      <td>{discussion.authorName}</td>
                       <td>{formatTanggal(discussion.createdAt)}</td>
-                      <td>{discussion.commentsCount}</td>
                       <td>
                         <button className="admin-btn edit" onClick={() => handleEdit(discussion)}>Update</button>
                         <button className="admin-btn" onClick={() => handleManageComments(discussion.id)}>Kelola Komentar</button>
@@ -134,7 +150,7 @@ const ManageForum = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" style={{ textAlign: 'center' }}>Tidak ada data forum.</td>
+                    <td colSpan="4" style={{ textAlign: 'center' }}>Tidak ada data forum.</td>
                   </tr>
                 )}
               </tbody>
