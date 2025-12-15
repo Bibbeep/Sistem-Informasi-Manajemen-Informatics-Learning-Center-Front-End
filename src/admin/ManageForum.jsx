@@ -17,6 +17,8 @@ const ManageForum = () => {
   const [editData, setEditData] = useState(null);
   const [showCommentsModal, setShowCommentsModal] = useState(false); // New state for comments modal
   const [selectedDiscussionId, setSelectedDiscussionId] = useState(null); // New state for selected discussion
+  const [searchQuery, setSearchQuery] = useState(''); // State for search input
+  const [ftsQuery, setFtsQuery] = useState(''); // State for triggering FTS API call
 
   const handleManageComments = (discussionId) => {
     setSelectedDiscussionId(discussionId);
@@ -28,15 +30,37 @@ const ManageForum = () => {
     setLoading(true);
     setError(null);
     try {
+      const params = {
+        page,
+        limit: 20, // Or another suitable limit
+        sort: '-createdAt',
+      };
+      if (ftsQuery) { // Only add q if ftsQuery is not empty
+        params.q = ftsQuery; 
+      }
       const response = await api.get('/discussions', {
-        params: {
-          page,
-          limit: 20, // Or another suitable limit
-          sort: '-createdAt',
-        },
+        params,
       });
-      setDiscussions(response.data.data.discussions);
-      setTotalPages(response.data.pagination.totalPages);
+      const { discussions } = response.data.data;
+      const { pagination } = response.data;
+
+      const discussionsWithAuthors = await Promise.all(
+        discussions.map(async (discussion) => {
+          try {
+            const userResponse = await api.get(`/users/${discussion.userId}`);
+            return {
+              ...discussion,
+              authorName: userResponse.data.data.user.fullName,
+            };
+          } catch (err) {
+            console.error(`Failed to fetch user for discussion ${discussion.id}:`, err);
+            return { ...discussion, authorName: 'Unknown' };
+          }
+        })
+      );
+
+      setDiscussions(discussionsWithAuthors);
+      setTotalPages(pagination.totalPages);
     } catch (err) {
       console.error("Failed to fetch discussions:", err);
       setError("Gagal memuat data forum.");
@@ -44,7 +68,7 @@ const ManageForum = () => {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, ftsQuery]); // Re-fetch when page or ftsQuery changes
 
   useEffect(() => {
     fetchDiscussions();
@@ -55,9 +79,15 @@ const ManageForum = () => {
     setShowModal(true);
   };
 
-  const handleEdit = (discussion) => {
-    setEditData(discussion);
-    setShowModal(true);
+  const handleEdit = async (discussion) => {
+    try {
+      const response = await api.get(`/discussions/${discussion.id}`);
+      setEditData(response.data.data.discussion);
+      setShowModal(true);
+    } catch (err) {
+      console.error("Failed to fetch discussion details for edit:", err);
+      toast.error("Gagal memuat detail diskusi untuk diedit.");
+    }
   };
 
   const handleDelete = async (discussionId) => {
@@ -76,6 +106,12 @@ const ManageForum = () => {
   const handleSave = () => {
     setShowModal(false);
     fetchDiscussions();
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setFtsQuery(searchQuery); // Set FTS query from current input
+    setPage(1); // Reset page on new search
   };
 
   const formatTanggal = (tanggal) => {
@@ -99,6 +135,16 @@ const ManageForum = () => {
           <button className="admin-btn add" onClick={handleAdd}>
             Tambah Forum
           </button>
+          <form onSubmit={handleSearchSubmit} className="admin-search-form">
+            <input
+              type="text"
+              placeholder="Cari forum..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="admin-search-input"
+            />
+            <button type="submit" className="admin-btn add">Cari</button>
+          </form>
         </div>
 
         {loading ? (
@@ -113,7 +159,6 @@ const ManageForum = () => {
                   <th>Judul Forum</th>
                   <th>Penulis</th>
                   <th>Tanggal Dibuat</th>
-                  <th>Jumlah Komentar</th>
                   <th>Aksi</th>
                 </tr>
               </thead>
@@ -122,9 +167,8 @@ const ManageForum = () => {
                   discussions.map((discussion) => (
                     <tr key={discussion.id}>
                       <td>{discussion.title}</td>
-                      <td>{discussion.authorName || 'Anonim'}</td>
+                      <td>{discussion.authorName}</td>
                       <td>{formatTanggal(discussion.createdAt)}</td>
-                      <td>{discussion.commentsCount}</td>
                       <td>
                         <button className="admin-btn edit" onClick={() => handleEdit(discussion)}>Update</button>
                         <button className="admin-btn" onClick={() => handleManageComments(discussion.id)}>Kelola Komentar</button>
@@ -134,7 +178,7 @@ const ManageForum = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" style={{ textAlign: 'center' }}>Tidak ada data forum.</td>
+                    <td colSpan="4" style={{ textAlign: 'center' }}>Tidak ada data forum.</td>
                   </tr>
                 )}
               </tbody>

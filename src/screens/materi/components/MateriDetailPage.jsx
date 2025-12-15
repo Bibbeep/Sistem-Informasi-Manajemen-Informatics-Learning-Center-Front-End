@@ -293,7 +293,7 @@ const MateriDetailPage = () => {
              <div className="mark-complete-section">
                 <p style={{color: 'orange', fontWeight: 'bold'}}>Program ini belum dibayar. Mohon selesaikan pembayaran.</p>
             </div>
-        ) : (program?.type !== 'Course' && enrollmentStatus !== 'completed') && (
+        ) : (program?.type !== 'Course' && enrollmentStatus !== 'completed') && user?.isAdmin && (
             <div className="mark-complete-section">
                 <button 
                     onClick={handleMarkAsComplete} 

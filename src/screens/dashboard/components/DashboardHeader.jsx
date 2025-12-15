@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './dashboardheader.css';
 
-const DashboardHeader = ({ onSearch }) => {
+const DashboardHeader = () => {
+  const navigate = useNavigate();
   const [userName, setUserName] = useState('User');
   const [keyword, setKeyword] = useState('');
 
@@ -13,11 +15,10 @@ const DashboardHeader = ({ onSearch }) => {
     }
   }, []);
 
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setKeyword(value);
-    if (typeof onSearch === 'function') {
-      onSearch(value);
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (keyword.trim()) {
+      navigate(`/programs?q=${encodeURIComponent(keyword)}`);
     }
   };
 
@@ -28,20 +29,21 @@ const DashboardHeader = ({ onSearch }) => {
         <p>Welcome back! Get ready for today’s course</p>
       </div>
       <div className="search-bar-only">
-        <input
-          type="text"
-          placeholder="Search for course here"
-          value={keyword}
-          onChange={handleSearchChange}
-        />
-        <button><i className="fa fa-search"></i></button>
+        <form onSubmit={handleSearchSubmit}>
+          <input
+            type="text"
+            placeholder="Search for course here"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+          />
+          <button type="submit"><i className="fa fa-search"></i></button>
+        </form>
       </div>
     </div>
   );
 };
 
-DashboardHeader.defaultProps = {
-  onSearch: () => {},
-};
+DashboardHeader.defaultProps = {}; // Remove unused defaultProps
 
 export default DashboardHeader;
+

@@ -7,8 +7,7 @@ import './modals.css';
 const AddForumModal = ({ onClose, onSave, defaultData }) => {
   const [formData, setFormData] = useState({
     title: '',
-    content: '',
-    programType: 'Course', // Default type
+    mainContent: '', // Renamed from content
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -16,14 +15,12 @@ const AddForumModal = ({ onClose, onSave, defaultData }) => {
     if (defaultData) {
       setFormData({
         title: defaultData.title || '',
-        content: defaultData.content || '',
-        programType: defaultData.programType || 'Course',
+        mainContent: defaultData.mainContent || '', // Renamed from content
       });
     } else {
       setFormData({
         title: '',
-        content: '',
-        programType: 'Course',
+        mainContent: '',
       });
     }
   }, [defaultData]);
@@ -39,17 +36,22 @@ const AddForumModal = ({ onClose, onSave, defaultData }) => {
 
     const discussionData = {
       title: formData.title,
+      mainContent: formData.mainContent, // Always include mainContent
     };
-
-    if (defaultData) {
-      discussionData.content = formData.content;
-      discussionData.programType = formData.programType;
-    }
 
     try {
       if (defaultData) {
-        await api.patch(`/discussions/${defaultData.id}`, discussionData);
-        toast.success("Forum berhasil diperbarui.");
+        // For update, only send changed fields
+        const changedData = {};
+        if (formData.title !== defaultData.title) changedData.title = formData.title;
+        if (formData.mainContent !== defaultData.mainContent) changedData.mainContent = formData.mainContent;
+
+        if (Object.keys(changedData).length > 0) {
+          await api.patch(`/discussions/${defaultData.id}`, changedData);
+          toast.success("Forum berhasil diperbarui.");
+        } else {
+          toast.info("Tidak ada perubahan untuk disimpan.");
+        }
       } else {
         await api.post('/discussions', discussionData);
         toast.success("Forum berhasil ditambahkan.");
@@ -79,29 +81,16 @@ const AddForumModal = ({ onClose, onSave, defaultData }) => {
             className="input-text"
           />
 
-          {defaultData && (
-            <>
-              <label>Konten Forum</label>
-              <textarea
-                name="content"
-                value={formData.content}
-                onChange={handleChange}
-                placeholder="Tulis konten forum..."
-                required
-                className="form-textarea scroll-hidden"
-                rows="5"
-                disabled={!!defaultData} // Disable in update mode
-              />
-
-              <label>Tipe Program</label>
-              <select name="programType" value={formData.programType} onChange={handleChange} className="admin-select" disabled={!!defaultData}>
-                <option value="Course">Course</option>
-                <option value="Seminar">Seminar</option>
-                <option value="Competition">Competition</option>
-                <option value="Workshop">Workshop</option>
-              </select>
-            </>
-          )}
+          <label>Konten Forum</label>
+          <textarea
+            name="mainContent" // Renamed from content
+            value={formData.mainContent}
+            onChange={handleChange}
+            placeholder="Tulis konten forum..."
+            required
+            className="form-textarea scroll-hidden"
+            rows="5"
+          />
 
           <div className="modal-actions">
             <button type="submit" className="admin-btn add" disabled={isSubmitting}>
