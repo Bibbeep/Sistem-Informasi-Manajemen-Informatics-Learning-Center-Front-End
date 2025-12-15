@@ -19,7 +19,8 @@ const Forum = () => {
   const [limit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [sort] = useState('-createdAt'); // Default sort by newest
-  const [searchQuery, setSearchQuery] = useState(''); // For search input
+  const [searchQuery, setSearchQuery] = useState(''); // For search input field value
+  const [ftsQuery, setFtsQuery] = useState(''); // Triggers FTS API call
   const [showAddModal, setShowAddModal] = useState(false); // State for Add Discussion Modal
 
   // Function to fetch discussions from API
@@ -32,10 +33,9 @@ const Forum = () => {
         limit,
         sort,
       };
-      // Removed filter !== 'All' logic as programType filter is removed
 
-      if (searchQuery) {
-        params.title = searchQuery; // Assuming API can search by title field
+      if (ftsQuery) { // Use ftsQuery for API call
+        params.q = ftsQuery; 
       }
 
       const response = await api.get('/discussions', { params });
@@ -62,12 +62,12 @@ const Forum = () => {
       setTotalPages(totalPages);
     } catch (err) {
       console.error("Failed to fetch discussions:", err); // DEBUGGING LINE
-      setError("Failed to load forum topics.");
+      setError("Gagal memuat topik forum.");
       toast.error("Gagal memuat topik forum.");
     } finally {
       setLoading(false);
     }
-  }, [page, limit, sort, searchQuery]);
+  }, [page, limit, sort, ftsQuery]); // Depend on ftsQuery
 
   // Initial fetch and re-fetch on dependency changes
   useEffect(() => {
@@ -80,8 +80,8 @@ const Forum = () => {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
+    setFtsQuery(searchQuery); // Set ftsQuery from current input
     setPage(1); // Reset page on new search
-    fetchDiscussions(); // Trigger search
   };
 
   const handlePageChange = (newPage) => {
