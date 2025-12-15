@@ -36,8 +36,27 @@ const Forum = () => {
       }
 
       const response = await api.get('/discussions', { params });
-      setDiscussions(response.data.data.discussions); // Correctly access the discussions array
-      setTotalPages(response.data.pagination.totalPages); // Correctly access totalPages
+      const discussionData = response.data.data.discussions;
+      const totalPages = response.data.pagination.totalPages;
+
+      // Fetch user data for each discussion
+      const discussionsWithAuthors = await Promise.all(
+        discussionData.map(async (discussion) => {
+          try {
+            const userResponse = await api.get(`/users/${discussion.userId}`);
+            return {
+              ...discussion,
+              authorName: userResponse.data.data.user.fullName,
+            };
+          } catch (err) {
+            console.error(`Failed to fetch user for discussion ${discussion.id}:`, err);
+            return { ...discussion, authorName: 'Unknown' }; // Fallback author name
+          }
+        })
+      );
+
+      setDiscussions(discussionsWithAuthors);
+      setTotalPages(totalPages);
     } catch (err) {
       console.error("Failed to fetch discussions:", err); // DEBUGGING LINE
       setError("Failed to load forum topics.");
@@ -105,7 +124,7 @@ const Forum = () => {
                   <div className="forum-info">
                     <p className="forum-title">{discussion.title}</p>
                     <span className="forum-meta">
-                      Oleh: {discussion.authorName} ({discussion.programType || 'Umum'})
+                      Oleh: {discussion.authorName} 
                       pada {new Date(discussion.createdAt).toLocaleDateString('id-ID')}
                     </span>
                   </div>
