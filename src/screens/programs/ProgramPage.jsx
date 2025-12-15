@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from '../sidebar/Sidebar';
 import ProfileBar from '../profilebar/ProfileBar';
 import DashboardHeader from '../dashboard/components/DashboardHeader';
@@ -47,9 +47,21 @@ const ProgramPage = () => {
   const [modalImgSrc, setModalImgSrc] = useState('');
   const [enrolledProgramIds, setEnrolledProgramIds] = useState(new Set());
   const [enrolledProgramsData, setEnrolledProgramsData] = useState([]);
+  const [initialLoadHandled, setInitialLoadHandled] = useState(false); // New state
 
   const navigate = useNavigate();
+  const location = useLocation(); // Hook to access URL parameters
   const { user } = useAuth(); // Get user from AuthContext
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const initialQuery = queryParams.get('q');
+    if (initialQuery) {
+      setSearchKeyword(initialQuery);
+      setFtsQuery(initialQuery);
+    }
+    setInitialLoadHandled(true); // Mark initial load as handled
+  }, [location.search]);
 
   // Debounce only for price inputs, not for FTS query
   const debouncedMinPrice = useDebounce(minPrice, 500);
@@ -141,10 +153,13 @@ const ProgramPage = () => {
   };
 
   useEffect(() => {
-    setPrograms([]);
-    setPage(1);
-    fetchPrograms(1, selectedFilter, true);
-  }, [ftsQuery, selectedFilter, debouncedMinPrice, debouncedMaxPrice, showAvailableOnly, sortOption]); // Depend on ftsQuery
+    // Only fetch programs once initial load is handled or when filters change
+    if (initialLoadHandled) { 
+      setPrograms([]);
+      setPage(1);
+      fetchPrograms(1, selectedFilter, true);
+    }
+  }, [ftsQuery, selectedFilter, debouncedMinPrice, debouncedMaxPrice, showAvailableOnly, showUnenrolledOnly, sortOption, initialLoadHandled]);
 
   const handleLoadMore = () => {
     const nextPage = page + 1;
@@ -160,6 +175,18 @@ const ProgramPage = () => {
     e.preventDefault();
     setFtsQuery(searchKeyword); // Trigger FTS query
     setPage(1); // Reset page on new search
+  };
+
+  const handleResetFilters = () => {
+    setSearchKeyword('');
+    setFtsQuery('');
+    setSelectedFilter('All');
+    setMinPrice('');
+    setMaxPrice('');
+    setShowAvailableOnly(false);
+    setShowUnenrolledOnly(false);
+    setSortOption('id');
+    setPage(1); // Reset page to 1
   };
 
   const handleFilterSelect = (filter) => {
@@ -240,6 +267,9 @@ const ProgramPage = () => {
               <option value="-availableDate">Date (Newest)</option>
             </select>
           </div>
+          <button className="admin-btn delete" onClick={handleResetFilters}>
+            Reset Filters
+          </button>
         </div>
 
         <Filter selected={selectedFilter} onSelect={handleFilterSelect} />

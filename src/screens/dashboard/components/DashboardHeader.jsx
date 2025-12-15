@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './dashboardheader.css';
 
-const DashboardHeader = ({ searchKeyword, onSearchChange, onSearchSubmit }) => {
+const DashboardHeader = () => {
+  const navigate = useNavigate();
   const [userName, setUserName] = useState('User');
+  const [keyword, setKeyword] = useState('');
 
   useEffect(() => {
     const storedUser = localStorage.getItem('loggedInUser');
@@ -12,6 +15,13 @@ const DashboardHeader = ({ searchKeyword, onSearchChange, onSearchSubmit }) => {
     }
   }, []);
 
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (keyword.trim()) {
+      navigate(`/programs?q=${encodeURIComponent(keyword)}`);
+    }
+  };
+
   return (
     <div className="dashboard-header">
       <div className="greeting">
@@ -19,12 +29,12 @@ const DashboardHeader = ({ searchKeyword, onSearchChange, onSearchSubmit }) => {
         <p>Welcome back! Get ready for today’s course</p>
       </div>
       <div className="search-bar-only">
-        <form onSubmit={onSearchSubmit}>
+        <form onSubmit={handleSearchSubmit}>
           <input
             type="text"
             placeholder="Search for course here"
-            value={searchKeyword}
-            onChange={(e) => onSearchChange(e.target.value)}
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
           />
           <button type="submit"><i className="fa fa-search"></i></button>
         </form>
@@ -33,10 +43,7 @@ const DashboardHeader = ({ searchKeyword, onSearchChange, onSearchSubmit }) => {
   );
 };
 
-DashboardHeader.defaultProps = {
-  searchKeyword: '',
-  onSearchChange: () => {},
-  onSearchSubmit: () => {},
-};
+DashboardHeader.defaultProps = {}; // Remove unused defaultProps
 
 export default DashboardHeader;
+
