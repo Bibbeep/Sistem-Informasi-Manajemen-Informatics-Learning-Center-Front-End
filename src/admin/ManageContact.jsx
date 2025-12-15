@@ -13,17 +13,23 @@ const ManageContact = () => {
   const [viewingFeedback, setViewingFeedback] = useState(null); // Feedback object for the modal
   const [responseMessage, setResponseMessage] = useState('');
   const [isResponding, setIsResponding] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(''); // State for search input
+  const [ftsQuery, setFtsQuery] = useState(''); // State for triggering FTS API call
 
   const fetchFeedbacks = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
+      const params = {
+        page,
+        limit: 20, // Or another suitable limit
+        sort: '-createdAt',
+      };
+      if (ftsQuery) { // Only add q if ftsQuery is not empty
+        params.q = ftsQuery; 
+      }
       const response = await api.get('/feedbacks', {
-        params: {
-          page,
-          limit: 20, // Or another suitable limit
-          sort: '-createdAt',
-        },
+        params,
       });
       setFeedbacks(response.data.data.feedbacks);
       setTotalPages(response.data.pagination.totalPages);
@@ -34,7 +40,7 @@ const ManageContact = () => {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, ftsQuery]); // Re-fetch when page or ftsQuery changes
 
   useEffect(() => {
     fetchFeedbacks();
@@ -95,12 +101,31 @@ const ManageContact = () => {
     }
   };
 
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setFtsQuery(searchQuery); // Set FTS query from current input
+    setPage(1); // Reset page on new search
+  };
+
 
   return (
     <div style={{ display: 'flex' }}>
       <AdminSidebar />
       <div className="admin-page scroll-hidden" style={{ flex: 1 }}>
         <h1>Pesan dari Pengguna</h1>
+        
+        <div className="admin-actions">
+          <form onSubmit={handleSearchSubmit} className="admin-search-form">
+            <input
+              type="text"
+              placeholder="Cari pesan..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="admin-search-input"
+            />
+            <button type="submit" className="admin-btn">Cari</button>
+          </form>
+        </div>
         
         {loading ? (
           <p>Memuat pesan...</p>
