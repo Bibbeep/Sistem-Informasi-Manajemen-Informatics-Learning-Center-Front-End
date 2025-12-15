@@ -17,6 +17,8 @@ const ManageForum = () => {
   const [editData, setEditData] = useState(null);
   const [showCommentsModal, setShowCommentsModal] = useState(false); // New state for comments modal
   const [selectedDiscussionId, setSelectedDiscussionId] = useState(null); // New state for selected discussion
+  const [searchQuery, setSearchQuery] = useState(''); // State for search input
+  const [ftsQuery, setFtsQuery] = useState(''); // State for triggering FTS API call
 
   const handleManageComments = (discussionId) => {
     setSelectedDiscussionId(discussionId);
@@ -28,12 +30,16 @@ const ManageForum = () => {
     setLoading(true);
     setError(null);
     try {
+      const params = {
+        page,
+        limit: 20, // Or another suitable limit
+        sort: '-createdAt',
+      };
+      if (ftsQuery) { // Only add q if ftsQuery is not empty
+        params.q = ftsQuery; 
+      }
       const response = await api.get('/discussions', {
-        params: {
-          page,
-          limit: 20, // Or another suitable limit
-          sort: '-createdAt',
-        },
+        params,
       });
       const { discussions } = response.data.data;
       const { pagination } = response.data;
@@ -62,7 +68,7 @@ const ManageForum = () => {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, ftsQuery]); // Re-fetch when page or ftsQuery changes
 
   useEffect(() => {
     fetchDiscussions();
@@ -102,6 +108,12 @@ const ManageForum = () => {
     fetchDiscussions();
   };
 
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setFtsQuery(searchQuery); // Set FTS query from current input
+    setPage(1); // Reset page on new search
+  };
+
   const formatTanggal = (tanggal) => {
     if (!tanggal) return '–';
     const dateObj = new Date(tanggal);
@@ -123,6 +135,16 @@ const ManageForum = () => {
           <button className="admin-btn add" onClick={handleAdd}>
             Tambah Forum
           </button>
+          <form onSubmit={handleSearchSubmit} className="admin-search-form">
+            <input
+              type="text"
+              placeholder="Cari forum..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="admin-search-input"
+            />
+            <button type="submit" className="admin-btn">Cari</button>
+          </form>
         </div>
 
         {loading ? (
