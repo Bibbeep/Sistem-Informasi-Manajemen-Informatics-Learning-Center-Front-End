@@ -134,6 +134,15 @@ const ForumDetailPage = () => {
       const topLevelComments = response.data.data.comments;
       setComments(topLevelComments);
 
+      // Initialize liked comments state from fetched data
+      const initialLiked = new Set();
+      topLevelComments.forEach(comment => {
+        if (comment.isLiked) {
+          initialLiked.add(comment.id);
+        }
+      });
+      setLikedComments(initialLiked);
+
       // Pre-collapse all comments that have replies
       const initialCollapsed = new Set();
       topLevelComments.forEach(comment => {
@@ -162,8 +171,19 @@ const ForumDetailPage = () => {
       // Update replies state
       setReplies(prev => ({ ...prev, [parentCommentId]: fetchedReplies }));
 
-      // Pre-collapse any newly fetched replies that themselves have replies
+      // Update liked comments state with any liked replies
       if (fetchedReplies && fetchedReplies.length > 0) {
+        setLikedComments(prevLiked => {
+          const newLiked = new Set(prevLiked);
+          fetchedReplies.forEach(reply => {
+            if (reply.isLiked) {
+              newLiked.add(reply.id);
+            }
+          });
+          return newLiked;
+        });
+
+        // Pre-collapse any newly fetched replies that themselves have replies
         setCollapsedComments(prev => {
           const newSet = new Set(prev);
           fetchedReplies.forEach(reply => {
