@@ -1,0 +1,26 @@
+
+.modul-content .material-download-button {
+  display: inline-block;
+  padding: 10px 20px;
+  margin-top: 15px;
+  background-color: #3f72af; /* Similar to admin-btn add */
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.modul-content .material-download-button:hover {
+  background-color: #316394; /* Darker on hover */
+  transform: translateY(-2px);
+  color: white; /* Keep text white on hover */
+}
+
+.modul-content .material-download-button:active {
+  transform: translateY(0);
+}
+

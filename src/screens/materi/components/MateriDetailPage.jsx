@@ -221,8 +221,26 @@ const MateriDetailPage = () => {
               )}
             </div>
             {modul.materialUrl && (
-              <div className="material-link">
-                <a href={modul.materialUrl} target="_blank" rel="noopener noreferrer" onClick={() => handleMaterialClick(modul.id)}>
+              <div>
+                <a 
+                  href={modul.materialUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  onClick={() => handleMaterialClick(modul.id)} 
+                  style={{
+                    display: 'inline-block',
+                    padding: '10px 20px',
+                    marginTop: '15px',
+                    backgroundColor: '#3f72af',
+                    color: 'white',
+                    textAlign: 'center',
+                    textDecoration: 'none',
+                    borderRadius: '8px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    border: 'none',
+                  }}
+                >
                   Download Materi
                 </a>
               </div>
