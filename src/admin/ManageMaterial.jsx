@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminSidebar from './AdminSidebar';
 import AddMaterialModal from './AddMaterialModal';
-import ManageMaterialsModal from './ManageMaterialsModal'; // Import the new modal
+import ManageMaterialsModal from './ManageMaterialsModal';
+import EditMarkdownModal from './EditMarkdownModal'; // Import the new markdown modal
 import './admin.css';
 import api from '../services/api';
 import { toast } from 'react-toastify';
@@ -15,12 +16,19 @@ const ManageMaterial = () => {
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [editData, setEditData] = useState(null);
-  const [showMaterialsModal, setShowMaterialsModal] = useState(false); // New state for materials modal
-  const [selectedModuleId, setSelectedModuleId] = useState(null); // New state for selected module
+  const [showMaterialsModal, setShowMaterialsModal] = useState(false);
+  const [selectedModuleId, setSelectedModuleId] = useState(null);
+  const [showMarkdownModal, setShowMarkdownModal] = useState(false); // State for markdown modal
+  const [selectedModule, setSelectedModule] = useState(null); // State for the selected module object
 
   const handleManageMaterials = (moduleId) => {
     setSelectedModuleId(moduleId);
     setShowMaterialsModal(true);
+  };
+
+  const handleEditMarkdown = (module) => {
+    setSelectedModule(module);
+    setShowMarkdownModal(true);
   };
   
   const fetchPrograms = useCallback(async () => {
@@ -155,44 +163,57 @@ const ManageMaterial = () => {
                             {mod.youtubeUrl}
                           </a>
                         </td>
-                                                                      <td>
-                                                                        <button className="admin-btn edit" onClick={() => handleEdit(mod)}>
-                                                                          Update
-                                                                        </button>
-                                                                        <button className="admin-btn" onClick={() => handleManageMaterials(mod.id)}>
-                                                                          Kelola Materi
-                                                                        </button>
-                                                                        <button className="admin-btn delete" onClick={() => handleDelete(mod.id)}>
-                                                                          Hapus
-                                                                        </button>
-                                                                      </td>
-                                                                    </tr>
-                                                                  ))
-                                                              )}
-                                                            </tbody>
-                                                          </table>
-                                                        )
-                                                      )}
-                                              
-                                                      {showModal && (
-                                                        <AddMaterialModal
-                                                          onClose={() => setShowModal(false)}
-                                                          onSave={fetchModules}
-                                                          defaultData={editData}
-                                                          programId={selectedProgramId}
-                                                        />
-                                                      )}
-                                              
-                                                      {showMaterialsModal && (
-                                                        <ManageMaterialsModal
-                                                          onClose={() => setShowMaterialsModal(false)}
-                                                          programId={selectedProgramId}
-                                                          moduleId={selectedModuleId}
-                                                        />
-                                                      )}
-                                                    </div>
-                                                  </div>
-                                                );
+                        <td>
+                          <button className="admin-btn edit" onClick={() => handleEdit(mod)}>
+                            Update
+                          </button>
+                          <button className="admin-btn" onClick={() => handleManageMaterials(mod.id)}>
+                            Materi
+                          </button>
+                          <button className="admin-btn" onClick={() => handleEditMarkdown(mod)}>
+                            Teks
+                          </button>
+                          <button className="admin-btn delete" onClick={() => handleDelete(mod.id)}>
+                            Hapus
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                )}
+              </tbody>
+            </table>
+          )
+        )}
+      
+        {showModal && (
+          <AddMaterialModal
+            onClose={() => setShowModal(false)}
+            onSave={fetchModules}
+            defaultData={editData}
+            programId={selectedProgramId}
+          />
+        )}
+      
+        {showMaterialsModal && (
+          <ManageMaterialsModal
+            onClose={() => setShowMaterialsModal(false)}
+            programId={selectedProgramId}
+            moduleId={selectedModuleId}
+          />
+        )}
+
+        {showMarkdownModal && (
+          <EditMarkdownModal
+            show={showMarkdownModal}
+            onClose={() => setShowMarkdownModal(false)}
+            programId={selectedProgramId}
+            module={selectedModule}
+            onSave={fetchModules}
+          />
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default ManageMaterial;
