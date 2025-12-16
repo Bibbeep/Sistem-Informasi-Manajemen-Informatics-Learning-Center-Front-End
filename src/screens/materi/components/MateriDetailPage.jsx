@@ -130,21 +130,31 @@ const MateriDetailPage = () => {
     fetchProgramData();
   }, [programId, user]);
   
+  const completingModulesRef = useRef(new Set()); // Ref to track modules being completed
+
   // Effect to check scrollability after markdown content is rendered
   useEffect(() => {
     legitMarkdown.forEach(moduleId => {
+      // If markdown is already marked as scrolled, do nothing.
+      if (moduleInteractions[moduleId]?.markdownScrolled) {
+        return;
+      }
       const container = markdownContainerRefs.current[moduleId];
       if (container && container.scrollHeight <= container.clientHeight) {
         // If not scrollable, mark as read immediately
         handleInteraction(moduleId, 'markdownScrolled');
       }
     });
-  }, [markdownContents, legitMarkdown]); // Rerun when markdown content changes
+  }, [markdownContents, legitMarkdown, moduleInteractions]); // Rerun when markdown content changes
 
 
   const checkAndCompleteModule = async (moduleId, currentModuleInteraction) => {
     const module = modules.find(m => m.id === moduleId);
-    if (!module || !enrollmentId || completedModules.has(moduleId)) return;
+    
+    // Exit if module is already completed or is currently being completed
+    if (!module || !enrollmentId || completedModules.has(moduleId) || completingModulesRef.current.has(moduleId)) {
+      return;
+    }
   
     const interaction = currentModuleInteraction || moduleInteractions[moduleId] || {};
   
@@ -154,12 +164,18 @@ const MateriDetailPage = () => {
   
     if (videoConditionMet && materialConditionMet && markdownConditionMet) {
       try {
+        // Add to ref to prevent concurrent requests
+        completingModulesRef.current.add(moduleId);
+
         await api.post(`/enrollments/${enrollmentId}/completed-modules`, { courseModuleId: moduleId });
         setCompletedModules(prev => new Set(prev).add(moduleId));
         toast.success(`Modul ${module.numberCode} selesai!`);
       } catch (err) {
         console.error(`Failed to mark module ${moduleId} as complete.`, err);
         toast.error(`Gagal menandai modul selesai. Mohon coba lagi.`);
+      } finally {
+        // Remove from ref once request is complete
+        completingModulesRef.current.delete(moduleId);
       }
     }
   };
