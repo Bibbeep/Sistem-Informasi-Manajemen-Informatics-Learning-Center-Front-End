@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import YouTube from 'react-youtube';
+import MDEditor from '@uiw/react-md-editor';
 import Sidebar from '../../sidebar/Sidebar';
 import ProfileBar from '../../profilebar/ProfileBar';
 import api from '../../../services/api';
@@ -38,6 +39,7 @@ const MateriDetailPage = () => {
   const [markAsCompleteLoading, setMarkAsCompleteLoading] = useState(false);
   const [certificateForCompletedProgram, setCertificateForCompletedProgram] = useState(null); // New state for certificate
   const [showCertificateModal, setShowCertificateModal] = useState(false); // New state for certificate modal
+  const [markdownContents, setMarkdownContents] = useState({}); // State for markdown contents
 
   const playerRefs = useRef({}); // Ref to hold YouTube player instances
   const [moduleInteractions, setModuleInteractions] = useState({});
@@ -94,7 +96,18 @@ const MateriDetailPage = () => {
               setCompletedModules(new Set(enrollmentDetails.completedModules.map(m => m.courseModuleId)));
             }
             const modulesRes = await api.get(`/programs/${programId}/modules`);
-            setModules(modulesRes.data.data.modules);
+            const fetchedModules = modulesRes.data.data.modules;
+            setModules(fetchedModules);
+            
+            // Fetch markdown for each module
+            fetchedModules.forEach(mod => {
+              if (mod.markdownUrl) {
+                fetch(mod.markdownUrl)
+                  .then(res => res.text())
+                  .then(text => setMarkdownContents(prev => ({ ...prev, [mod.id]: text })))
+                  .catch(err => console.error(`Failed to fetch markdown for module ${mod.id}`, err));
+              }
+            });
           }
           
           // Fetch certificate if program is completed, regardless of type
@@ -202,6 +215,11 @@ const MateriDetailPage = () => {
                 />
               </div>
             )}
+            <div data-color-mode="light" style={{'padding': '15px'}}>
+              {markdownContents[modul.id] && (
+                <MDEditor.Markdown source={markdownContents[modul.id]} />
+              )}
+            </div>
             {modul.materialUrl && (
               <div className="material-link">
                 <a href={modul.materialUrl} target="_blank" rel="noopener noreferrer" onClick={() => handleMaterialClick(modul.id)}>

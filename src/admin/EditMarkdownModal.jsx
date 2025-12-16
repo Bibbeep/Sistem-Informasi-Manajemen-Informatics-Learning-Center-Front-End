@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import MDEditor from '@uiw/react-md-editor';
+import "@uiw/react-md-editor/markdown-editor.css";
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import './modals.css';
