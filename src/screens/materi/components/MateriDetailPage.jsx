@@ -35,16 +35,19 @@ const MateriDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [enrollmentId, setEnrollmentId] = useState(null);
-  const [enrollmentStatus, setEnrollmentStatus] = useState(null); // New state for enrollment status
+  const [enrollmentStatus, setEnrollmentStatus] = useState(null);
   const [markAsCompleteLoading, setMarkAsCompleteLoading] = useState(false);
-  const [certificateForCompletedProgram, setCertificateForCompletedProgram] = useState(null); // New state for certificate
-  const [showCertificateModal, setShowCertificateModal] = useState(false); // New state for certificate modal
-  const [markdownContents, setMarkdownContents] = useState({}); // State for markdown contents
-
-  const playerRefs = useRef({}); // Ref to hold YouTube player instances
+  const [certificateForCompletedProgram, setCertificateForCompletedProgram] = useState(null);
+  const [showCertificateModal, setShowCertificateModal] = useState(false);
+  const [markdownContents, setMarkdownContents] = useState({});
+  
+  // New states for progress tracking
+  const [legitMarkdown, setLegitMarkdown] = useState(new Set());
   const [moduleInteractions, setModuleInteractions] = useState({});
 
-  // Cleanup effect to destroy players on unmount
+  const playerRefs = useRef({});
+  const markdownContainerRefs = useRef({}); // Ref for markdown containers
+
   useEffect(() => {
     return () => {
       Object.values(playerRefs.current).forEach(player => {
@@ -52,18 +55,13 @@ const MateriDetailPage = () => {
           player.destroy();
         }
       });
-      playerRefs.current = {}; // Clear refs
+      playerRefs.current = {};
     };
   }, []);
 
   useEffect(() => {
-    if (!programId) {
-      setError("Program ID not found.");
-      setLoading(false);
-      return;
-    }
-    if (!user) {
-      setError("Please log in to view this page.");
+    if (!programId || !user) {
+      setError(programId ? "Please log in to view this page." : "Program ID not found.");
       setLoading(false);
       return;
     }
@@ -71,57 +69,51 @@ const MateriDetailPage = () => {
     const fetchProgramData = async () => {
       try {
         setLoading(true);
-        // Fetch program details
         const programRes = await api.get(`/programs/${programId}`);
         const programData = programRes.data.data.program;
         setProgram(programData);
 
-        // Fetch enrollment details for the current user and program
         const enrollmentListRes = await api.get('/enrollments', { params: { programId, userId: user.sub } });
         const enrollmentSummary = enrollmentListRes.data.data.enrollments[0];
 
         if (enrollmentSummary) {
           setEnrollmentId(enrollmentSummary.id);
           const currentEnrollmentStatus = enrollmentSummary.status.toLowerCase();
-          setEnrollmentStatus(currentEnrollmentStatus); // Set enrollment status in lowercase
+          setEnrollmentStatus(currentEnrollmentStatus);
 
-          console.log("Program Type:", programData.type);
-          console.log("Enrollment Status:", currentEnrollmentStatus);
-
-          // If it's a Course, fetch modules and completed modules
           if (programData.type === 'Course') {
             const enrollmentDetailRes = await api.get(`/enrollments/${enrollmentSummary.id}`);
             const enrollmentDetails = enrollmentDetailRes.data.data.enrollment;
             if (enrollmentDetails.completedModules) {
               setCompletedModules(new Set(enrollmentDetails.completedModules.map(m => m.courseModuleId)));
             }
+
             const modulesRes = await api.get(`/programs/${programId}/modules`);
             const fetchedModules = modulesRes.data.data.modules;
             setModules(fetchedModules);
-            
-            // Fetch markdown for each module
+
             fetchedModules.forEach(mod => {
               if (mod.markdownUrl) {
                 fetch(mod.markdownUrl)
-                  .then(res => res.text())
-                  .then(text => setMarkdownContents(prev => ({ ...prev, [mod.id]: text })))
+                  .then(res => {
+                    if (res.ok) return res.text();
+                    throw new Error('Network response was not ok.');
+                  })
+                  .then(text => {
+                    if (text && text.trim().length > 0) {
+                      setMarkdownContents(prev => ({ ...prev, [mod.id]: text }));
+                      setLegitMarkdown(prev => new Set(prev).add(mod.id));
+                    }
+                  })
                   .catch(err => console.error(`Failed to fetch markdown for module ${mod.id}`, err));
               }
             });
           }
-          
-          // Fetch certificate if program is completed, regardless of type
+
           if (currentEnrollmentStatus === 'completed') {
-            console.log("Attempting to fetch certificate for programId:", programId, "userId:", user.sub);
-            const certificateRes = await api.get(`/certificates`, {
-                params: { programId: programId, userId: user.sub }
-            });
-            console.log("Certificate API Response:", certificateRes.data);
+            const certificateRes = await api.get(`/certificates`, { params: { programId, userId: user.sub } });
             if (certificateRes.data.data.certificates.length > 0) {
-                setCertificateForCompletedProgram(certificateRes.data.data.certificates[0]);
-                console.log("Certificate found and set:", certificateRes.data.data.certificates[0]);
-            } else {
-                console.log("No certificate found for this program and user.");
+              setCertificateForCompletedProgram(certificateRes.data.data.certificates[0]);
             }
           }
         } else {
@@ -137,23 +129,34 @@ const MateriDetailPage = () => {
 
     fetchProgramData();
   }, [programId, user]);
+  
+  // Effect to check scrollability after markdown content is rendered
+  useEffect(() => {
+    legitMarkdown.forEach(moduleId => {
+      const container = markdownContainerRefs.current[moduleId];
+      if (container && container.scrollHeight <= container.clientHeight) {
+        // If not scrollable, mark as read immediately
+        handleInteraction(moduleId, 'markdownScrolled');
+      }
+    });
+  }, [markdownContents, legitMarkdown]); // Rerun when markdown content changes
 
-  const checkAndCompleteModule = async (moduleId, isVideo, isMaterial) => {
+
+  const checkAndCompleteModule = async (moduleId, currentModuleInteraction) => {
     const module = modules.find(m => m.id === moduleId);
     if (!module || !enrollmentId || completedModules.has(moduleId)) return;
-    
-    // Use the latest interaction state directly
-    const interaction = moduleInteractions[moduleId] || {};
-    const videoWatched = isVideo || interaction.videoWatched;
-    const materialClicked = isMaterial || interaction.materialClicked;
-
-    const videoConditionMet = !module.youtubeUrl || videoWatched;
-    const materialConditionMet = !module.materialUrl || materialClicked;
-
-    if (videoConditionMet && materialConditionMet) {
+  
+    const interaction = currentModuleInteraction || moduleInteractions[moduleId] || {};
+  
+    const videoConditionMet = !module.youtubeUrl || interaction.videoWatched;
+    const materialConditionMet = !module.materialUrl || interaction.materialClicked;
+    const markdownConditionMet = !legitMarkdown.has(moduleId) || interaction.markdownScrolled;
+  
+    if (videoConditionMet && materialConditionMet && markdownConditionMet) {
       try {
         await api.post(`/enrollments/${enrollmentId}/completed-modules`, { courseModuleId: moduleId });
         setCompletedModules(prev => new Set(prev).add(moduleId));
+        toast.success(`Modul ${module.numberCode} selesai!`);
       } catch (err) {
         console.error(`Failed to mark module ${moduleId} as complete.`, err);
         toast.error(`Gagal menandai modul selesai. Mohon coba lagi.`);
@@ -161,14 +164,19 @@ const MateriDetailPage = () => {
     }
   };
 
-  const handleVideoEnd = (moduleId) => {
-    setModuleInteractions(prev => ({...prev, [moduleId]: { ...prev[moduleId], videoWatched: true }}));
-    checkAndCompleteModule(moduleId, true, false);
+  const handleInteraction = (moduleId, type) => {
+    setModuleInteractions(prev => {
+      const newInteractionForModule = { ...prev[moduleId], [type]: true };
+      checkAndCompleteModule(moduleId, newInteractionForModule); // Pass the updated interaction
+      return { ...prev, [moduleId]: newInteractionForModule };
+    });
   };
-
-  const handleMaterialClick = (moduleId) => {
-    setModuleInteractions(prev => ({...prev, [moduleId]: { ...prev[moduleId], materialClicked: true }}));
-    checkAndCompleteModule(moduleId, false, true);
+  
+  const handleMarkdownScroll = (e, moduleId) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.target;
+    if (scrollHeight - scrollTop <= clientHeight + 1) { // +1 for pixel-perfect precision issues
+        handleInteraction(moduleId, 'markdownScrolled');
+    }
   };
 
   const handleMarkAsComplete = async () => {
@@ -179,12 +187,11 @@ const MateriDetailPage = () => {
     setMarkAsCompleteLoading(true);
     try {
       await api.patch(`/enrollments/${enrollmentId}`, { status: 'Completed' });
-      setEnrollmentStatus('completed'); // Update local state
+      setEnrollmentStatus('completed');
       toast.success("Program berhasil ditandai selesai!");
     } catch (err) {
       const errorMessage = err.response?.data?.message || "Gagal menandai program selesai.";
       toast.error(errorMessage);
-      console.error("Error marking program as complete:", err);
     } finally {
       setMarkAsCompleteLoading(false);
     }
@@ -210,23 +217,30 @@ const MateriDetailPage = () => {
                 <YouTube
                   videoId={videoId}
                   onReady={(event) => (playerRefs.current[modul.id] = event.target)}
-                  onEnd={() => handleVideoEnd(modul.id)} // Use onEnd directly
+                  onEnd={() => handleInteraction(modul.id, 'videoWatched')}
                   opts={{ width: '100%', height: '100%' }}
                 />
               </div>
             )}
-            <div data-color-mode="light" style={{'padding': '15px'}}>
-              {markdownContents[modul.id] && (
-                <MDEditor.Markdown source={markdownContents[modul.id]} />
-              )}
-            </div>
+            {legitMarkdown.has(modul.id) && (
+                <div 
+                    ref={el => markdownContainerRefs.current[modul.id] = el}
+                    data-color-mode="light" 
+                    style={{ maxHeight: '600px', overflowY: 'auto', border: '1px solid #eee', padding: '15px', borderRadius: '8px', marginTop: '15px' }}
+                    onScroll={(e) => handleMarkdownScroll(e, modul.id)}
+                >
+                    {markdownContents[modul.id] ? (
+                        <MDEditor.Markdown source={markdownContents[modul.id]} />
+                    ) : <p>Memuat materi...</p>}
+                </div>
+            )}
             {modul.materialUrl && (
               <div>
                 <a 
                   href={modul.materialUrl} 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  onClick={() => handleMaterialClick(modul.id)} 
+                  onClick={() => handleInteraction(modul.id, 'materialClicked')}
                   style={{
                     display: 'inline-block',
                     padding: '10px 20px',
