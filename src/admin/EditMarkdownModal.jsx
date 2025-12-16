@@ -35,7 +35,15 @@ const EditMarkdownModal = ({ show, onClose, programId, module, onSave }) => {
 
     setLoading(true);
     try {
-      await api.put(`/programs/${programId}/modules/${module.id}/texts`, { content: value });
+      const formData = new FormData();
+      const markdownBlob = new Blob([value], { type: 'text/markdown' });
+      formData.append('text', markdownBlob, 'content.md'); // Key 'text', filename 'content.md'
+
+      await api.put(`/programs/${programId}/modules/${module.id}/texts`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       toast.success("Konten markdown berhasil disimpan.");
       onSave(); // This will trigger a refetch in the parent
       onClose();
