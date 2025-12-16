@@ -153,7 +153,9 @@ const ManageEnrollments = () => {
                                                                                     Tandai Selesai
                                                                                 </button>
                                                                             )}
-                                                                            {enrollment.programType === 'Course' && (
+                                                                            {enrollment.programType === 'Course' && 
+                                                                             enrollment.status.toLowerCase() !== 'unpaid' && 
+                                                                             enrollment.status.toLowerCase() !== 'expired' && (
                                                                                 <button className="admin-btn edit" onClick={() => handleManageModules(enrollment.id)}>
                                                                                     Kelola Modul
                                                                                 </button>
