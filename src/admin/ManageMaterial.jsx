@@ -8,10 +8,9 @@ import api from '../services/api';
 import { toast } from 'react-toastify';
 
 const ManageMaterial = () => {
-  const [programs, setPrograms] = useState([]);
   const [selectedProgramId, setSelectedProgramId] = useState('');
+  const [selectedProgramTitle, setSelectedProgramTitle] = useState(''); // New state to display selected program
   const [modules, setModules] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [loadingModules, setLoadingModules] = useState(false);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -20,6 +19,12 @@ const ManageMaterial = () => {
   const [selectedModuleId, setSelectedModuleId] = useState(null);
   const [showMarkdownModal, setShowMarkdownModal] = useState(false); // State for markdown modal
   const [selectedModule, setSelectedModule] = useState(null); // State for the selected module object
+
+  // Program Search States
+  const [searchProgramQuery, setSearchProgramQuery] = useState(''); // Input for program search
+  const [ftsProgramQuery, setFtsProgramQuery] = useState(''); // Query to trigger API call
+  const [searchedPrograms, setSearchedPrograms] = useState([]); // Results from program search
+  const [loadingProgramsSearch, setLoadingProgramsSearch] = useState(false); // Loading state for program search
 
   const handleManageMaterials = (moduleId) => {
     setSelectedModuleId(moduleId);
@@ -31,32 +36,37 @@ const ManageMaterial = () => {
     setShowMarkdownModal(true);
   };
   
-  const fetchPrograms = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  // Function to fetch programs based on search query
+  const fetchProgramsForSearch = useCallback(async () => {
+    setLoadingProgramsSearch(true);
     try {
-      const response = await api.get('/programs', {
-        params: {
-          type: 'course',
-          limit: 100, // Fetch all courses
-        },
-      });
-      setPrograms(response.data.data.programs);
+      const params = {
+        type: 'course',
+        limit: 20, // Limit search results
+      };
+      if (ftsProgramQuery) {
+        params.q = ftsProgramQuery;
+      }
+      const response = await api.get('/programs', { params });
+      setSearchedPrograms(response.data.data.programs);
     } catch (err) {
-      console.error('Gagal fetch programs', err);
-      setError("Gagal memuat data program.");
-      toast.error("Gagal memuat data program.");
+      console.error('Failed to search programs', err);
+      toast.error("Gagal mencari program.");
     } finally {
-      setLoading(false);
+      setLoadingProgramsSearch(false);
     }
-  }, []);
+  }, [ftsProgramQuery]);
 
+  // Effect to trigger program search when ftsProgramQuery changes
   useEffect(() => {
-    fetchPrograms();
-  }, [fetchPrograms]);
+    fetchProgramsForSearch();
+  }, [fetchProgramsForSearch]);
 
   const fetchModules = useCallback(async () => {
-    if (!selectedProgramId) return;
+    if (!selectedProgramId) {
+      setModules([]); // Clear modules if no program is selected
+      return;
+    }
     setLoadingModules(true);
     try {
       const response = await api.get(`/programs/${selectedProgramId}/modules`);
@@ -96,6 +106,21 @@ const ManageMaterial = () => {
     }
   };
 
+  const handleSearchProgramSubmit = (e) => {
+    e.preventDefault();
+    setFtsProgramQuery(searchProgramQuery);
+    setSelectedProgramId(''); // Clear selected program when new search is initiated
+    setSelectedProgramTitle('');
+    setModules([]); // Clear modules when a new search is initiated
+  };
+
+  const handleSelectSearchedProgram = (program) => {
+    setSelectedProgramId(program.id);
+    setSelectedProgramTitle(program.title);
+    setSearchedPrograms([]); // Clear search results after selection
+    setSearchProgramQuery(program.title); // Display selected program name in search bar
+  };
+
 
   return (
     <div style={{ display: 'flex' }}>
@@ -104,34 +129,46 @@ const ManageMaterial = () => {
         <h1>Kelola Modul Materi</h1>
 
         <div className="admin-actions">
-          <label style={{ fontWeight: 600, marginRight: '10px', marginTop: '5px', color: '#0d3b66'}}>
-            Pilih Program Kursus:
-          </label>
-          {loading ? (
-            <p>Memuat program...</p>
-          ) : error ? (
-            <p style={{color: 'red'}}>{error}</p>
-          ) : (
-            <select
-              className="admin-select"
-              value={selectedProgramId}
-              onChange={(e) => setSelectedProgramId(e.target.value)}
-            >
-              <option value="">-- Pilih Program --</option>
-              {programs.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.title}
-                </option>
-              ))}
-            </select>
-          )}
+          <form onSubmit={handleSearchProgramSubmit} className="admin-search-form" style={{ flexGrow: 1, marginRight: '10px' }}>
+            <label style={{ fontWeight: 600, marginRight: '10px', color: '#0d3b66', whiteSpace: 'nowrap'}}>
+              Cari Program Kursus:
+            </label>
+            <input
+              type="text"
+              placeholder="Cari program berdasarkan judul..."
+              value={searchProgramQuery}
+              onChange={(e) => setSearchProgramQuery(e.target.value)}
+              className="admin-search-input"
+            />
+            <button type="submit" className="admin-btn add">Cari</button>
+          </form>
 
           {selectedProgramId && (
-            <button className="admin-btn add" style={{ marginLeft: '10px' }} onClick={handleAdd}>
+            <button className="admin-btn add" onClick={handleAdd}>
               Tambah Modul
             </button>
           )}
         </div>
+
+        {/* Display Search Results */}
+        {loadingProgramsSearch ? (
+          <p>Memuat hasil pencarian...</p>
+        ) : (searchedPrograms.length > 0 && !selectedProgramId) && (
+          <div className="search-results-dropdown" style={{ border: '1px solid #ccc', borderRadius: '8px', maxHeight: '200px', overflowY: 'auto', backgroundColor: '#fff', position: 'relative', zIndex: 10 }}>
+            {searchedPrograms.map(program => (
+              <div 
+                key={program.id} 
+                className="search-result-item" 
+                onClick={() => handleSelectSearchedProgram(program)}
+                style={{ padding: '10px', cursor: 'pointer', borderBottom: '1px solid #eee' }}
+              >
+                {program.title}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {selectedProgramTitle && <h2 style={{marginTop: '20px'}}>Modul untuk Program: {selectedProgramTitle}</h2>}
 
         {selectedProgramId && (
           loadingModules ? (
