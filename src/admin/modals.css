@@ -157,3 +157,38 @@
     transform: translateY(0);
   }
 }
+/* Thumbnail Upload Section */
+.thumbnail-upload-section {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.thumbnail-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.thumbnail-controls input[type='file'] {
+  flex-grow: 1;
+}
+
+.thumbnail-controls .admin-btn {
+  flex-shrink: 0;
+}
+
+
+.thumbnail-preview {
+  max-width: 200px;
+  max-height: 150px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  object-fit: cover;
+}
+
+
+.wmde-markdown-fullscreen {
+  z-index: 1000 !important;
+}

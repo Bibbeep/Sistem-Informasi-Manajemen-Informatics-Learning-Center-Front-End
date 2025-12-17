@@ -17,6 +17,8 @@ import ManageUsers from './admin/ManageUsers';
 import ManagePrograms from './admin/ManagePrograms';
 import ManageMaterials from './admin/ManageMaterial';
 import ManageCertificates from './admin/ManageCertificates';
+import ManageEnrollments from './admin/ManageEnrollments';
+import ManageEnrollmentModules from './admin/ManageEnrollmentModules';
 import ManageForum from './admin/ManageForum';
 import ManagePayment from './admin/ManagePayment';
 import ManageContact from './admin/ManageContact';
@@ -63,6 +65,8 @@ function App() {
           <Route path="/admin/programs" element={<ManagePrograms />} />
           <Route path="/admin/materials" element={<ManageMaterials />} />
           <Route path="/admin/certificates" element={<ManageCertificates />} />
+          <Route path="/admin/manage-enrollments" element={<ManageEnrollments />} />
+          <Route path="/admin/manage-enrollment-modules/:enrollmentId" element={<ManageEnrollmentModules />} />
           <Route path="/admin/forum" element={<ManageForum />} />
           <Route path="/admin/payment" element={<ManagePayment />} />
           <Route path="/admin/contact" element={<ManageContact />} />

@@ -24,6 +24,8 @@ const ManagePrograms = () => {
   const [showModal, setShowModal] = useState(false);
   const [editProgram, setEditProgram] = useState(null);
   const [sort, setSort] = useState({ field: 'availableDate', order: 'desc' }); // Default sort by date descending
+  const [searchQuery, setSearchQuery] = useState(''); // State for search input
+  const [ftsQuery, setFtsQuery] = useState(''); // State for triggering FTS API call
 
   const handleSort = (field) => {
     setSort(prev => {
@@ -39,13 +41,16 @@ const ManagePrograms = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.get('/programs', {
-        params: {
-          page,
-          limit: 20,
-          sort: `${sort.order === 'desc' ? '-' : ''}${sort.field === 'priceIdr' ? 'price' : sort.field}`,
-        },
-      });
+      const params = {
+        page,
+        limit: 20,
+        sort: `${sort.order === 'desc' ? '-' : ''}${sort.field === 'priceIdr' ? 'price' : sort.field}`,
+      };
+      if (ftsQuery) { // Add q if ftsQuery is not empty
+        params.q = ftsQuery;
+      }
+
+      const response = await api.get('/programs', { params });
       setPrograms(response.data.data.programs);
       setTotalPages(response.data.pagination.totalPages);
     } catch (err) {
@@ -55,7 +60,7 @@ const ManagePrograms = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, sort.field, sort.order]);
+  }, [page, sort.field, sort.order, ftsQuery]); // Re-fetch when page, sort, or ftsQuery changes
 
   useEffect(() => {
     fetchPrograms();
@@ -66,9 +71,21 @@ const ManagePrograms = () => {
     setShowModal(true);
   };
 
-  const handleEdit = (program) => {
-    setEditProgram(program);
-    setShowModal(true);
+  const handleEdit = async (program) => {
+    try {
+      const response = await api.get(`/programs/${program.id}`);
+      setEditProgram(response.data.data.program);
+      setShowModal(true);
+    } catch (err) {
+      console.error("Failed to fetch program details for edit:", err);
+      toast.error("Gagal memuat detail program untuk diedit.");
+    }
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setFtsQuery(searchQuery); // Set FTS query from current input
+    setPage(1); // Reset page on new search
   };
 
     const handleDelete = async (id) => {
@@ -105,13 +122,35 @@ const ManagePrograms = () => {
 
         <div className="admin-page scroll-hidden" style={{ flex: 1 }}>
 
-          <h1>Kelola Program</h1>
+                    <h1>Kelola Program</h1>
 
-          <div className="admin-actions">
+          
 
-            <button className="admin-btn add" onClick={handleAdd}>Tambah Program</button>
+                    <div className="admin-actions">
 
-          </div>
+                      <button className="admin-btn add" onClick={handleAdd}>Tambah Program</button>
+
+                      <form onSubmit={handleSearchSubmit} className="admin-search-form">
+
+                        <input
+
+                          type="text"
+
+                          placeholder="Cari program..."
+
+                          value={searchQuery}
+
+                          onChange={(e) => setSearchQuery(e.target.value)}
+
+                          className="admin-search-input"
+
+                        />
+
+                        <button type="submit" className="admin-btn add">Cari</button>
+
+                      </form>
+
+                    </div>
 
   
 

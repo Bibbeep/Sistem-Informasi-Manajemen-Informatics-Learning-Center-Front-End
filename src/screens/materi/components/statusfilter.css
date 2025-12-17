@@ -1,0 +1,28 @@
+.status-filter-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  
+  .status-filter-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    background-color: #ffff;
+    color: #333;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  
+  .status-filter-button:hover {
+    background-color: #c0d6f7;
+    transform: scale(1.03);
+  }
+  
+  .status-filter-button.active {
+    background-color: #3b82f6;
+    color: #fff;
+    font-weight: 600;
+  }
+  

@@ -21,13 +21,28 @@ const CourseCards = () => {
 
       try {
         const response = await api.get('/enrollments', {
-          params: { userId: user.sub, limit: 100, sort: '-updatedAt', status: 'all' }, // Fetch top 5 recently updated
+          params: { 
+            userId: user.sub, 
+            limit: 4, 
+            sort: '-updatedAt', 
+            status: ['in progress', 'completed'] 
+          },
+          paramsSerializer: params => {
+            const parts = [];
+            for (const key in params) {
+              const value = params[key];
+              if (Array.isArray(value)) {
+                for (const v of value) {
+                  parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(v)}`);
+                }
+              } else {
+                parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+              }
+            }
+            return parts.join('&');
+          }
         });
-        const allEnrolled = response.data.data.enrollments;
-        const filteredEnrolled = allEnrolled.filter(enrollment => 
-          enrollment.status.toLowerCase() === 'in progress' || enrollment.status.toLowerCase() === 'completed'
-        );
-        setEnrolledPrograms(filteredEnrolled);
+        setEnrolledPrograms(response.data.data.enrollments);
         setError(null);
       } catch (err) {
         setError("Failed to load enrolled programs.");
@@ -58,6 +73,10 @@ const CourseCards = () => {
 
   return (
     <div className="course-cards">
+      <div className="course-cards-header">
+        <h3>My Learnings</h3>
+        <button className="see-more-btn" onClick={() => navigate('/materi')}>See More</button>
+      </div>
       <div className="cards-container">
         {enrolledPrograms.map(program => (
           <div
@@ -66,7 +85,7 @@ const CourseCards = () => {
             onClick={() => handleCardClick(program.programId)}
             style={{ cursor: 'pointer' }}
           >
-            <h3>{program.programTitle}</h3>
+            <h4>{program.programTitle}</h4>
             <div className="progress-bar-container">
               <div
                 className="progress-fill"

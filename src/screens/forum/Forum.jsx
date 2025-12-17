@@ -4,10 +4,12 @@ import './forum.css';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api'; // Import API service
 import { ToastContainer, toast } from 'react-toastify'; // For notifications
+import { useAuth } from '../../context/AuthContext'; // Import useAuth
+import AddDiscussionModal from './AddDiscussionModal'; // Import the new modal
 
 const Forum = () => {
   const navigate = useNavigate();
-  // const { user } = useAuth(); // Removed: Get user info for authentication
+  const { user } = useAuth(); // Get user info for authentication
   
   // State for forum list
   const [discussions, setDiscussions] = useState([]);
@@ -17,7 +19,9 @@ const Forum = () => {
   const [limit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [sort] = useState('-createdAt'); // Default sort by newest
-  const [searchQuery, setSearchQuery] = useState(''); // For search input
+  const [searchQuery, setSearchQuery] = useState(''); // For search input field value
+  const [ftsQuery, setFtsQuery] = useState(''); // Triggers FTS API call
+  const [showAddModal, setShowAddModal] = useState(false); // State for Add Discussion Modal
 
   // Function to fetch discussions from API
   const fetchDiscussions = useCallback(async () => {
@@ -29,23 +33,41 @@ const Forum = () => {
         limit,
         sort,
       };
-      // Removed filter !== 'All' logic as programType filter is removed
 
-      if (searchQuery) {
-        params.title = searchQuery; // Assuming API can search by title field
+      if (ftsQuery) { // Use ftsQuery for API call
+        params.q = ftsQuery; 
       }
 
       const response = await api.get('/discussions', { params });
-      setDiscussions(response.data.data.discussions); // Correctly access the discussions array
-      setTotalPages(response.data.pagination.totalPages); // Correctly access totalPages
+      const discussionData = response.data.data.discussions;
+      const totalPages = response.data.pagination.totalPages;
+
+      // Fetch user data for each discussion
+      const discussionsWithAuthors = await Promise.all(
+        discussionData.map(async (discussion) => {
+          try {
+            const userResponse = await api.get(`/users/${discussion.userId}`);
+            return {
+              ...discussion,
+              authorName: userResponse.data.data.user.fullName,
+            };
+          } catch (err) {
+            console.error(`Failed to fetch user for discussion ${discussion.id}:`, err);
+            return { ...discussion, authorName: 'Unknown' }; // Fallback author name
+          }
+        })
+      );
+
+      setDiscussions(discussionsWithAuthors);
+      setTotalPages(totalPages);
     } catch (err) {
       console.error("Failed to fetch discussions:", err); // DEBUGGING LINE
-      setError("Failed to load forum topics.");
+      setError("Gagal memuat topik forum.");
       toast.error("Gagal memuat topik forum.");
     } finally {
       setLoading(false);
     }
-  }, [page, limit, sort, searchQuery]);
+  }, [page, limit, sort, ftsQuery]); // Depend on ftsQuery
 
   // Initial fetch and re-fetch on dependency changes
   useEffect(() => {
@@ -58,8 +80,8 @@ const Forum = () => {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
+    setFtsQuery(searchQuery); // Set ftsQuery from current input
     setPage(1); // Reset page on new search
-    fetchDiscussions(); // Trigger search
   };
 
   const handlePageChange = (newPage) => {
@@ -77,6 +99,15 @@ const Forum = () => {
           <div className="forum-header">
             <h2>Forum Diskusi</h2>
             <div className="forum-actions">
+              {user && ( // Only show button if user is authenticated
+                <button
+                  className="admin-btn add" // Reusing admin-btn styling for consistency
+                  onClick={() => setShowAddModal(true)}
+                  style={{ marginRight: '10px' }}
+                >
+                  Buat Diskusi Baru
+                </button>
+              )}
               <form onSubmit={handleSearchSubmit} className="forum-search">
                 <input
                   type="text"
@@ -105,13 +136,8 @@ const Forum = () => {
                   <div className="forum-info">
                     <p className="forum-title">{discussion.title}</p>
                     <span className="forum-meta">
-                      Oleh: {discussion.authorName} ({discussion.programType || 'Umum'})
-                      pada {new Date(discussion.createdAt).toLocaleDateString('id-ID')}
+                                            Oleh: {discussion.authorName} pada {new Date(discussion.createdAt).toLocaleDateString('id-ID')}
                     </span>
-                  </div>
-                  <div className="forum-stats">
-                    <div className="comment-count">{discussion.commentsCount} Komentar</div>
-                    {/* Add unread badge logic here if needed */}
                   </div>
                 </div>
               ))
@@ -137,6 +163,13 @@ const Forum = () => {
         </div>
       </div>
       <ToastContainer position="top-center" autoClose={3000} />
+
+      {showAddModal && (
+        <AddDiscussionModal
+          onClose={() => setShowAddModal(false)}
+          onSave={fetchDiscussions}
+        />
+      )}
     </div>
   );
 };

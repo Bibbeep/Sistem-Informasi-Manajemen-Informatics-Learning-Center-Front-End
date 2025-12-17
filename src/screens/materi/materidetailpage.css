@@ -1,0 +1,46 @@
+
+.modul-content .material-download-button {
+  display: inline-block;
+  padding: 10px 20px;
+  margin-top: 15px;
+  background-color: #3f72af; /* Similar to admin-btn add */
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.modul-content .material-download-button:hover {
+  background-color: #316394; /* Darker on hover */
+  transform: translateY(-2px);
+  color: white; /* Keep text white on hover */
+}
+
+.modul-content .material-download-button:active {
+  transform: translateY(0);
+}
+
+
+.youtube-embed {
+  position: relative;
+  width: 100%;
+  max-width: 560px; /* Adjusted max-width to make it smaller */
+  padding-bottom: 56.25%; /* 16:9 aspect ratio (height / width = 9 / 16 = 0.5625) */
+  height: 0;
+  overflow: hidden;
+  margin-bottom: 15px; /* Space below the video */
+}
+
+.youtube-embed iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+

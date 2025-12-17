@@ -3,7 +3,7 @@ import React from 'react';
 import './profilebar.css';
 import UserProfile from './components/UserProfile';
 import Calendar from './components/Calendar';
-import TaskList from './components/TaskList';
+
 
 const ProfileBar = () => {
   return (
@@ -12,7 +12,7 @@ const ProfileBar = () => {
 
         <UserProfile />
         <Calendar />
-        <TaskList />
+        
       </nav>
     </div>
   );

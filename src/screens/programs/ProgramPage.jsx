@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from '../sidebar/Sidebar';
 import ProfileBar from '../profilebar/ProfileBar';
 import DashboardHeader from '../dashboard/components/DashboardHeader';
@@ -35,21 +35,35 @@ const ProgramPage = () => {
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchKeyword, setSearchKeyword] = useState(''); // Holds current input value
+  const [ftsQuery, setFtsQuery] = useState(''); // Triggers FTS API call
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [showAvailableOnly, setShowAvailableOnly] = useState(false);
+  const [showUnenrolledOnly, setShowUnenrolledOnly] = useState(false);
   const [sortOption, setSortOption] = useState('id');
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [modalImgSrc, setModalImgSrc] = useState('');
   const [enrolledProgramIds, setEnrolledProgramIds] = useState(new Set());
   const [enrolledProgramsData, setEnrolledProgramsData] = useState([]);
+  const [initialLoadHandled, setInitialLoadHandled] = useState(false); // New state
 
   const navigate = useNavigate();
+  const location = useLocation(); // Hook to access URL parameters
   const { user } = useAuth(); // Get user from AuthContext
 
-  const debouncedSearchKeyword = useDebounce(searchKeyword, 500);
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const initialQuery = queryParams.get('q');
+    if (initialQuery) {
+      setSearchKeyword(initialQuery);
+      setFtsQuery(initialQuery);
+    }
+    setInitialLoadHandled(true); // Mark initial load as handled
+  }, [location.search]);
+
+  // Debounce only for price inputs, not for FTS query
   const debouncedMinPrice = useDebounce(minPrice, 500);
   const debouncedMaxPrice = useDebounce(maxPrice, 500);
 
@@ -109,7 +123,7 @@ const ProgramPage = () => {
         type: filter === 'All' ? 'all' : filter.toLowerCase(),
         limit: 10,
         page: currentPage,
-        title: debouncedSearchKeyword || undefined,
+        q: ftsQuery || undefined, // Use ftsQuery for full-text search
         'price.gte': debouncedMinPrice || undefined,
         'price.lte': debouncedMaxPrice || undefined,
         isAvailable: showAvailableOnly ? true : undefined,
@@ -139,10 +153,13 @@ const ProgramPage = () => {
   };
 
   useEffect(() => {
-    setPrograms([]);
-    setPage(1);
-    fetchPrograms(1, selectedFilter, true);
-  }, [debouncedSearchKeyword, selectedFilter, debouncedMinPrice, debouncedMaxPrice, showAvailableOnly, sortOption]);
+    // Only fetch programs once initial load is handled or when filters change
+    if (initialLoadHandled) { 
+      setPrograms([]);
+      setPage(1);
+      fetchPrograms(1, selectedFilter, true);
+    }
+  }, [ftsQuery, selectedFilter, debouncedMinPrice, debouncedMaxPrice, showAvailableOnly, showUnenrolledOnly, sortOption, initialLoadHandled]);
 
   const handleLoadMore = () => {
     const nextPage = page + 1;
@@ -150,8 +167,26 @@ const ProgramPage = () => {
     fetchPrograms(nextPage, selectedFilter);
   };
 
-  const handleSearch = (keyword) => {
+  const handleSearchChange = (keyword) => {
     setSearchKeyword(keyword);
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setFtsQuery(searchKeyword); // Trigger FTS query
+    setPage(1); // Reset page on new search
+  };
+
+  const handleResetFilters = () => {
+    setSearchKeyword('');
+    setFtsQuery('');
+    setSelectedFilter('All');
+    setMinPrice('');
+    setMaxPrice('');
+    setShowAvailableOnly(false);
+    setShowUnenrolledOnly(false);
+    setSortOption('id');
+    setPage(1); // Reset page to 1
   };
 
   const handleFilterSelect = (filter) => {
@@ -177,7 +212,11 @@ const ProgramPage = () => {
     <div className="course-container">
       <Sidebar />
       <div className="course-content">
-        <DashboardHeader onSearch={handleSearch} />
+        <DashboardHeader 
+          searchKeyword={searchKeyword}
+          onSearchChange={handleSearchChange}
+          onSearchSubmit={handleSearchSubmit}
+        />
         
         <div className="program-filters">
           <div className="filter-group">
@@ -209,6 +248,15 @@ const ProgramPage = () => {
             />
             <label htmlFor="showAvailableOnly">Available Only</label>
           </div>
+          <div className="filter-group checkbox-group">
+            <input
+              type="checkbox"
+              id="showUnenrolledOnly"
+              checked={showUnenrolledOnly}
+              onChange={(e) => setShowUnenrolledOnly(e.target.checked)}
+            />
+            <label htmlFor="showUnenrolledOnly">Unenrolled Only</label>
+          </div>
           <div className="filter-group">
             <label htmlFor="sortOption">Sort By:</label>
             <select id="sortOption" value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
@@ -219,6 +267,9 @@ const ProgramPage = () => {
               <option value="-availableDate">Date (Newest)</option>
             </select>
           </div>
+          <button className="admin-btn delete" onClick={handleResetFilters}>
+            Reset Filters
+          </button>
         </div>
 
         <Filter selected={selectedFilter} onSelect={handleFilterSelect} />
@@ -227,19 +278,24 @@ const ProgramPage = () => {
 
         <div className="course-grid">
           {programs.length === 0 && !loading && <p>No programs found.</p>}
-          {programs.map((program) => (
-            <CourseCard
-              key={program.id}
-              title={program.title}
-              type={program.type}
-              image={program.thumbnailUrl}
-              date={program.availableDate}
-              price={program.priceIdr}
-              description={program.description}
-              isEnrolled={enrolledProgramIds.has(program.id)} // Pass enrollment status
-              onClick={() => setSelectedProgram(program)}
-            />
-          ))}
+          {programs
+            .filter(program => !showUnenrolledOnly || !enrolledProgramIds.has(program.id))
+            .map((program) => {
+              const enrollment = enrolledProgramsData.find(e => e.programId === program.id);
+              return (
+                <CourseCard
+                  key={program.id}
+                  title={program.title}
+                  type={program.type}
+                  image={program.thumbnailUrl}
+                  date={program.availableDate}
+                  price={program.priceIdr}
+                  description={program.description}
+                  enrollmentStatus={enrollment ? enrollment.status : null} // Pass status string
+                  onClick={() => setSelectedProgram(program)}
+                />
+              );
+          })}
         </div>
 
         {loading && programs.length === 0 && <p>Loading...</p>}

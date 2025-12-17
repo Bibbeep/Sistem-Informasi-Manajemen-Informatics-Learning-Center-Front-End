@@ -37,8 +37,9 @@
 /* Grid untuk daftar materi */
 .materi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 300px));
   gap: 20px;
+  justify-content: start;
 }
 
 /* Kartu materi */
@@ -72,12 +73,19 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  min-width: 0; /* Prevents overflow in flex item */
 }
 
 .materi-content h3 {
   margin: 0;
   font-size: 16px;
   color: #1a202c;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Limit to 2 lines */
+  -webkit-box-orient: vertical;
+  white-space: normal;
 }
 
 .materi-content p {
@@ -88,16 +96,37 @@
 
 /* Tombol buka materi */
 .open-button {
-  align-self: flex-start;
-  background-color: #4d9ef7;
-  color: #ffffff;
-  padding: 8px 14px;
+  padding: 6px 12px;
+  background-color: #4f46e5;
+  color: white;
   border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
+  border-radius: 6px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  transition: background-color 0.3s;
+}
+
+.materi-buttons {
+  display: flex;
+  flex-wrap: wrap; /* Allows buttons to stack on smaller screens */
+  gap: 10px;
+  margin-top: 10px;
+  align-self: flex-start;
+}
+
+.certificate-button {
+  padding: 6px 12px;
+  background-color: #3f72af; /* Blue accent color */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.certificate-button:hover {
+  background-color: #316394;
 }
 
 .open-button:hover {
@@ -123,5 +152,38 @@
   transition: width 0.5s ease-in-out;
   margin: 0;
   padding: 0;
+}
+
+
+.load-more-container {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+}
+
+.load-more-btn {
+    background-color: #3b82f6;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+}
+
+.load-more-btn:hover:not(:disabled) {
+    background-color: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(59, 130, 246, 0.4);
+}
+
+.load-more-btn:disabled {
+    background-color: #a0c3e6;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
 }
 

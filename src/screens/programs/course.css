@@ -114,6 +114,7 @@
     border-radius: 12px;
     margin-bottom: 20px;
     align-items: flex-end;
+    justify-content: space-between; /* Distribute items with space between */
 }
 
 .filter-group {
@@ -227,5 +228,12 @@
   background-color: #dc2626; /* Darker red on hover */
   transform: scale(1.05);
   box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+}
+
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end; /* Align content to the right */
+  margin-bottom: 20px; /* Space between filter and cards */
 }
 

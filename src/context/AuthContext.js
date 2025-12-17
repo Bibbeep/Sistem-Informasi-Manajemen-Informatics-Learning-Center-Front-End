@@ -28,17 +28,20 @@ export const AuthProvider = ({ children }) => {
       try {
         const decodedUser = jwtDecode(token);
         setUser(decodedUser);
-        // Fetch full user details immediately after setting basic user from token
-        fetchUserProfile(decodedUser.sub);
+        fetchUserProfile(decodedUser.sub).finally(() => {
+          setLoading(false);
+        });
       } catch (error) {
         console.error("Invalid token:", error);
         localStorage.removeItem('accessToken');
         setUser(null);
         setProfile(null);
+        setLoading(false);
       }
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
-  }, [fetchUserProfile]); // fetchUserProfile is a dependency
+  }, [fetchUserProfile]);
 
   const login = async (email, password) => {
     try {

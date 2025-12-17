@@ -1,54 +1,72 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminSidebar from './AdminSidebar';
 import AddMaterialModal from './AddMaterialModal';
-import ManageMaterialsModal from './ManageMaterialsModal'; // Import the new modal
+import ManageMaterialsModal from './ManageMaterialsModal';
+import EditMarkdownModal from './EditMarkdownModal'; // Import the new markdown modal
 import './admin.css';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 
 const ManageMaterial = () => {
-  const [programs, setPrograms] = useState([]);
   const [selectedProgramId, setSelectedProgramId] = useState('');
+  const [selectedProgramTitle, setSelectedProgramTitle] = useState(''); // New state to display selected program
   const [modules, setModules] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [loadingModules, setLoadingModules] = useState(false);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [editData, setEditData] = useState(null);
-  const [showMaterialsModal, setShowMaterialsModal] = useState(false); // New state for materials modal
-  const [selectedModuleId, setSelectedModuleId] = useState(null); // New state for selected module
+  const [showMaterialsModal, setShowMaterialsModal] = useState(false);
+  const [selectedModuleId, setSelectedModuleId] = useState(null);
+  const [showMarkdownModal, setShowMarkdownModal] = useState(false); // State for markdown modal
+  const [selectedModule, setSelectedModule] = useState(null); // State for the selected module object
+
+  // Program Search States
+  const [searchProgramQuery, setSearchProgramQuery] = useState(''); // Input for program search
+  const [ftsProgramQuery, setFtsProgramQuery] = useState(''); // Query to trigger API call
+  const [searchedPrograms, setSearchedPrograms] = useState([]); // Results from program search
+  const [loadingProgramsSearch, setLoadingProgramsSearch] = useState(false); // Loading state for program search
 
   const handleManageMaterials = (moduleId) => {
     setSelectedModuleId(moduleId);
     setShowMaterialsModal(true);
   };
-  
-  const fetchPrograms = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await api.get('/programs', {
-        params: {
-          type: 'course',
-          limit: 100, // Fetch all courses
-        },
-      });
-      setPrograms(response.data.data.programs);
-    } catch (err) {
-      console.error('Gagal fetch programs', err);
-      setError("Gagal memuat data program.");
-      toast.error("Gagal memuat data program.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
+  const handleEditMarkdown = (module) => {
+    setSelectedModule(module);
+    setShowMarkdownModal(true);
+  };
+  
+  // Function to fetch programs based on search query
+  const fetchProgramsForSearch = useCallback(async () => {
+    setLoadingProgramsSearch(true);
+    try {
+      const params = {
+        type: 'course',
+        limit: 20, // Limit search results
+      };
+      if (ftsProgramQuery) {
+        params.q = ftsProgramQuery;
+      }
+      const response = await api.get('/programs', { params });
+      setSearchedPrograms(response.data.data.programs);
+    } catch (err) {
+      console.error('Failed to search programs', err);
+      toast.error("Gagal mencari program.");
+    } finally {
+      setLoadingProgramsSearch(false);
+    }
+  }, [ftsProgramQuery]);
+
+  // Effect to trigger program search when ftsProgramQuery changes
   useEffect(() => {
-    fetchPrograms();
-  }, [fetchPrograms]);
+    fetchProgramsForSearch();
+  }, [fetchProgramsForSearch]);
 
   const fetchModules = useCallback(async () => {
-    if (!selectedProgramId) return;
+    if (!selectedProgramId) {
+      setModules([]); // Clear modules if no program is selected
+      return;
+    }
     setLoadingModules(true);
     try {
       const response = await api.get(`/programs/${selectedProgramId}/modules`);
@@ -88,6 +106,21 @@ const ManageMaterial = () => {
     }
   };
 
+  const handleSearchProgramSubmit = (e) => {
+    e.preventDefault();
+    setFtsProgramQuery(searchProgramQuery);
+    setSelectedProgramId(''); // Clear selected program when new search is initiated
+    setSelectedProgramTitle('');
+    setModules([]); // Clear modules when a new search is initiated
+  };
+
+  const handleSelectSearchedProgram = (program) => {
+    setSelectedProgramId(program.id);
+    setSelectedProgramTitle(program.title);
+    setSearchedPrograms([]); // Clear search results after selection
+    setSearchProgramQuery(program.title); // Display selected program name in search bar
+  };
+
 
   return (
     <div style={{ display: 'flex' }}>
@@ -96,34 +129,46 @@ const ManageMaterial = () => {
         <h1>Kelola Modul Materi</h1>
 
         <div className="admin-actions">
-          <label style={{ fontWeight: 600, marginRight: '10px', marginTop: '5px', color: '#0d3b66'}}>
-            Pilih Program Kursus:
-          </label>
-          {loading ? (
-            <p>Memuat program...</p>
-          ) : error ? (
-            <p style={{color: 'red'}}>{error}</p>
-          ) : (
-            <select
-              className="admin-select"
-              value={selectedProgramId}
-              onChange={(e) => setSelectedProgramId(e.target.value)}
-            >
-              <option value="">-- Pilih Program --</option>
-              {programs.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.title}
-                </option>
-              ))}
-            </select>
-          )}
+          <form onSubmit={handleSearchProgramSubmit} className="admin-search-form" style={{ flexGrow: 1, marginRight: '10px' }}>
+            <label style={{ fontWeight: 600, marginRight: '10px', color: '#0d3b66', whiteSpace: 'nowrap'}}>
+              Cari Program Kursus:
+            </label>
+            <input
+              type="text"
+              placeholder="Cari program berdasarkan judul..."
+              value={searchProgramQuery}
+              onChange={(e) => setSearchProgramQuery(e.target.value)}
+              className="admin-search-input"
+            />
+            <button type="submit" className="admin-btn add">Cari</button>
+          </form>
 
           {selectedProgramId && (
-            <button className="admin-btn add" style={{ marginLeft: '10px' }} onClick={handleAdd}>
+            <button className="admin-btn add" onClick={handleAdd}>
               Tambah Modul
             </button>
           )}
         </div>
+
+        {/* Display Search Results */}
+        {loadingProgramsSearch ? (
+          <p>Memuat hasil pencarian...</p>
+        ) : (searchedPrograms.length > 0 && !selectedProgramId) && (
+          <div className="search-results-dropdown" style={{ border: '1px solid #ccc', borderRadius: '8px', maxHeight: '200px', overflowY: 'auto', backgroundColor: '#fff', position: 'relative', zIndex: 10 }}>
+            {searchedPrograms.map(program => (
+              <div 
+                key={program.id} 
+                className="search-result-item" 
+                onClick={() => handleSelectSearchedProgram(program)}
+                style={{ padding: '10px', cursor: 'pointer', borderBottom: '1px solid #eee' }}
+              >
+                {program.title}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {selectedProgramTitle && <h2 style={{marginTop: '20px'}}>Modul untuk Program: {selectedProgramTitle}</h2>}
 
         {selectedProgramId && (
           loadingModules ? (
@@ -155,44 +200,57 @@ const ManageMaterial = () => {
                             {mod.youtubeUrl}
                           </a>
                         </td>
-                                                                      <td>
-                                                                        <button className="admin-btn edit" onClick={() => handleEdit(mod)}>
-                                                                          Update
-                                                                        </button>
-                                                                        <button className="admin-btn" onClick={() => handleManageMaterials(mod.id)}>
-                                                                          Kelola Materi
-                                                                        </button>
-                                                                        <button className="admin-btn delete" onClick={() => handleDelete(mod.id)}>
-                                                                          Hapus
-                                                                        </button>
-                                                                      </td>
-                                                                    </tr>
-                                                                  ))
-                                                              )}
-                                                            </tbody>
-                                                          </table>
-                                                        )
-                                                      )}
-                                              
-                                                      {showModal && (
-                                                        <AddMaterialModal
-                                                          onClose={() => setShowModal(false)}
-                                                          onSave={fetchModules}
-                                                          defaultData={editData}
-                                                          programId={selectedProgramId}
-                                                        />
-                                                      )}
-                                              
-                                                      {showMaterialsModal && (
-                                                        <ManageMaterialsModal
-                                                          onClose={() => setShowMaterialsModal(false)}
-                                                          programId={selectedProgramId}
-                                                          moduleId={selectedModuleId}
-                                                        />
-                                                      )}
-                                                    </div>
-                                                  </div>
-                                                );
+                        <td>
+                          <button className="admin-btn edit" onClick={() => handleEdit(mod)}>
+                            Update
+                          </button>
+                          <button className="admin-btn" onClick={() => handleManageMaterials(mod.id)}>
+                            Materi
+                          </button>
+                          <button className="admin-btn" onClick={() => handleEditMarkdown(mod)}>
+                            Teks
+                          </button>
+                          <button className="admin-btn delete" onClick={() => handleDelete(mod.id)}>
+                            Hapus
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                )}
+              </tbody>
+            </table>
+          )
+        )}
+      
+        {showModal && (
+          <AddMaterialModal
+            onClose={() => setShowModal(false)}
+            onSave={fetchModules}
+            defaultData={editData}
+            programId={selectedProgramId}
+          />
+        )}
+      
+        {showMaterialsModal && (
+          <ManageMaterialsModal
+            onClose={() => setShowMaterialsModal(false)}
+            programId={selectedProgramId}
+            moduleId={selectedModuleId}
+          />
+        )}
+
+        {showMarkdownModal && (
+          <EditMarkdownModal
+            show={showMarkdownModal}
+            onClose={() => setShowMarkdownModal(false)}
+            programId={selectedProgramId}
+            module={selectedModule}
+            onSave={fetchModules}
+          />
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default ManageMaterial;
