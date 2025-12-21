@@ -15,8 +15,15 @@ const ManageContact = () => {
   const [isResponding, setIsResponding] = useState(false);
   const [searchQuery, setSearchQuery] = useState(''); // State for search input
   const [ftsQuery, setFtsQuery] = useState(''); // State for triggering FTS API call
+  const abortControllerRef = React.useRef(null);
+
 
   const fetchFeedbacks = useCallback(async () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
     setLoading(true);
     setError(null);
     try {
@@ -30,20 +37,31 @@ const ManageContact = () => {
       }
       const response = await api.get('/feedbacks', {
         params,
+        signal: abortControllerRef.current.signal,
       });
       setFeedbacks(response.data.data.feedbacks);
       setTotalPages(response.data.pagination.totalPages);
     } catch (err) {
+      if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+        return;
+      }
       console.error("Failed to fetch feedbacks:", err);
       setError("Gagal memuat pesan feedback.");
       toast.error("Gagal memuat pesan feedback.");
     } finally {
-      setLoading(false);
+      if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
+        setLoading(false);
+      }
     }
   }, [page, ftsQuery]); // Re-fetch when page or ftsQuery changes
 
   useEffect(() => {
     fetchFeedbacks();
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [fetchFeedbacks]);
 
   const handleViewFeedback = async (feedback) => {

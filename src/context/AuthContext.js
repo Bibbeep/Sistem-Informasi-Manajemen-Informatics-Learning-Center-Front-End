@@ -8,28 +8,44 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null); // New state for full user profile
   const [loading, setLoading] = useState(true);
+  const abortControllerRef = React.useRef(null);
+
 
   // Function to fetch full user profile
-  const fetchUserProfile = useCallback(async (userId) => {
+  const fetchUserProfile = useCallback(async (userId, signal) => {
     try {
-      const response = await api.get(`/users/${userId}`);
+      const response = await api.get(`/users/${userId}`, { signal });
       setProfile(response.data.data.user);
       return response.data.data.user;
     } catch (error) {
+      if (error.name === 'CanceledError') {
+        console.log('Request to fetch user profile was canceled.');
+        return;
+      }
       console.error("Failed to fetch user profile:", error);
       setProfile(null);
-      throw error;
+      // Re-throwing is important if the caller needs to handle it (like in login)
+      // but for the initial load, we might just want to fail gracefully.
+      // throw error; 
     }
   }, []);
 
   useEffect(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
     const token = localStorage.getItem('accessToken');
     if (token) {
       try {
         const decodedUser = jwtDecode(token);
         setUser(decodedUser);
-        fetchUserProfile(decodedUser.sub).finally(() => {
-          setLoading(false);
+        fetchUserProfile(decodedUser.sub, signal).finally(() => {
+          if (!signal.aborted) {
+            setLoading(false);
+          }
         });
       } catch (error) {
         console.error("Invalid token:", error);
@@ -40,6 +56,12 @@ export const AuthProvider = ({ children }) => {
       }
     } else {
       setLoading(false);
+    }
+    
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
     }
   }, [fetchUserProfile]);
 

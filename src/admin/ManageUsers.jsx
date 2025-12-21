@@ -9,36 +9,55 @@ const ManageUsers = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [searchQuery, setSearchQuery] = useState(''); // State for search input
-  const [ftsQuery, setFtsQuery] = useState(''); // State for triggering FTS API call
-
+      const [totalPages, setTotalPages] = useState(1);
+      const [searchQuery, setSearchQuery] = useState(''); // State for search input
+      const [ftsQuery, setFtsQuery] = useState(''); // State for triggering FTS API call
+      const abortControllerRef = React.useRef(null);
+  
+  
       const fetchUsers = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = {
-        page,
-        limit: 20,
-      };
-      if (ftsQuery) { // Only add q if ftsQuery is not empty
-        params.q = ftsQuery;
-      }
-      const response = await api.get('/users', { params });
-      setUsers(response.data.data.users);
-      setTotalPages(response.data.pagination.totalPages);
-    } catch (err) {
-      console.error("Failed to fetch users:", err);
-      setError("Gagal memuat data pengguna.");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, ftsQuery]); // Re-fetch when page or ftsQuery changes
-
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
-
+          if (abortControllerRef.current) {
+              abortControllerRef.current.abort();
+          }
+          abortControllerRef.current = new AbortController();
+  
+          setLoading(true);
+          setError(null);
+          try {
+              const params = {
+                  page,
+                  limit: 20,
+              };
+              if (ftsQuery) { // Only add q if ftsQuery is not empty
+                  params.q = ftsQuery;
+              }
+              const response = await api.get('/users', { 
+                  params,
+                  signal: abortControllerRef.current.signal,
+              });
+              setUsers(response.data.data.users);
+              setTotalPages(response.data.pagination.totalPages);
+          } catch (err) {
+              if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+                  return;
+              }
+              console.error("Failed to fetch users:", err);
+              setError("Gagal memuat data pengguna.");
+          } finally {
+              if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
+                  setLoading(false);
+              }
+          }
+      }, [page, ftsQuery]); // Re-fetch when page or ftsQuery changes
+  
+      useEffect(() => {
+          fetchUsers();
+          return () => {
+              if (abortControllerRef.current) {
+                  abortControllerRef.current.abort();
+              }
+          }
+      }, [fetchUsers]);
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     setFtsQuery(searchQuery); // Set FTS query from current input
