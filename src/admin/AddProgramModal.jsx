@@ -44,9 +44,9 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
         type: defaultData.type || 'Course',
         priceIdr: defaultData.priceIdr || '',
         isOnline: details.isOnline !== undefined ? details.isOnline : true,
-        videoConferenceUrl: details.videoConferenceUrl || '',
-        locationAddress: details.locationAddress || '',
-        contestRoomUrl: details.contestRoomUrl || '',
+        videoConferenceUrl: details.videoConferenceUrl || null,
+        locationAddress: details.locationAddress || null,
+        contestRoomUrl: details.contestRoomUrl || null,
         speakerNames: Array.isArray(details.speakerNames) ? details.speakerNames.join(', ') : '',
         facilitatorNames: Array.isArray(details.facilitatorNames) ? details.facilitatorNames.join(', ') : '',
         hostName: details.hostName || '',
@@ -61,9 +61,9 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
         type: 'Course',
         priceIdr: '',
         isOnline: true,
-        videoConferenceUrl: '',
-        locationAddress: '',
-        contestRoomUrl: '',
+        videoConferenceUrl: null,
+        locationAddress: null,
+        contestRoomUrl: null,
         speakerNames: '',
         facilitatorNames: '',
         hostName: '',
@@ -107,29 +107,31 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
 
         // Type specific checks
         if (formData.type !== 'Course') {
-           if (formData.isOnline !== defaultData.isOnline) changes.isOnline = formData.isOnline;
+           const details = defaultData.details || {};
+           if (formData.isOnline !== details.isOnline) changes.isOnline = formData.isOnline;
            
            if (formData.isOnline) {
-               if (formData.videoConferenceUrl !== defaultData.videoConferenceUrl) changes.videoConferenceUrl = formData.videoConferenceUrl;
+               if (formData.videoConferenceUrl !== details.videoConferenceUrl) changes.videoConferenceUrl = formData.videoConferenceUrl;
            } else {
-               if (formData.locationAddress !== defaultData.locationAddress) changes.locationAddress = formData.locationAddress;
+               if (formData.locationAddress !== details.locationAddress) changes.locationAddress = formData.locationAddress;
            }
         }
 
         if (formData.type === 'Seminar') {
             const newSpeakers = formData.speakerNames.split(',').map(s => s.trim()).filter(s => s);
-            if (JSON.stringify(newSpeakers) !== JSON.stringify(defaultData.speakerNames || [])) {
+            if (JSON.stringify(newSpeakers) !== JSON.stringify(defaultData.details?.speakerNames || [])) {
                 changes.speakerNames = newSpeakers;
             }
         } else if (formData.type === 'Workshop') {
             const newFacilitators = formData.facilitatorNames.split(',').map(s => s.trim()).filter(s => s);
-            if (JSON.stringify(newFacilitators) !== JSON.stringify(defaultData.facilitatorNames || [])) {
+            if (JSON.stringify(newFacilitators) !== JSON.stringify(defaultData.details?.facilitatorNames || [])) {
                 changes.facilitatorNames = newFacilitators;
             }
         } else if (formData.type === 'Competition') {
-            if (formData.contestRoomUrl !== defaultData.contestRoomUrl) changes.contestRoomUrl = formData.contestRoomUrl;
-            if (formData.hostName !== defaultData.hostName) changes.hostName = formData.hostName;
-            if (Number(formData.totalPrize) !== Number(defaultData.totalPrize)) changes.totalPrize = Number(formData.totalPrize);
+            const details = defaultData.details || {};
+            if (formData.contestRoomUrl !== details.contestRoomUrl) changes.contestRoomUrl = formData.contestRoomUrl;
+            if (formData.hostName !== details.hostName) changes.hostName = formData.hostName;
+            if (Number(formData.totalPrize) !== Number(details.totalPrize)) changes.totalPrize = Number(formData.totalPrize);
         }
 
         if (Object.keys(changes).length <= 1) { // Only 'type' is present
@@ -255,9 +257,9 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
                 </div>
               </div>
               {formData.isOnline ? (
-                <input type="text" name="videoConferenceUrl" placeholder="URL Video Conference" value={formData.videoConferenceUrl} onChange={handleChange} required />
+                <input type="text" name="videoConferenceUrl" placeholder="URL Video Conference" value={formData.videoConferenceUrl || ''} onChange={handleChange} required />
               ) : (
-                <input type="text" name="locationAddress" placeholder="Alamat Lokasi" value={formData.locationAddress} onChange={handleChange} required />
+                <input type="text" name="locationAddress" placeholder="Alamat Lokasi" value={formData.locationAddress || ''} onChange={handleChange} required />
               )}
             </>
           )}
@@ -272,7 +274,7 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
 
           {formData.type === 'Competition' && (
             <>
-              <input type="text" name="contestRoomUrl" placeholder="URL Ruang Kontes" value={formData.contestRoomUrl} onChange={handleChange} />
+              <input type="text" name="contestRoomUrl" placeholder="URL Ruang Kontes" value={formData.contestRoomUrl || ''} onChange={handleChange} />
               <input type="text" name="hostName" placeholder="Nama Host" value={formData.hostName} onChange={handleChange} />
               <input type="number" name="totalPrize" placeholder="Total Hadiah (Rp)" value={formData.totalPrize} onChange={handleChange} required min="0" step="1" />
             </>
