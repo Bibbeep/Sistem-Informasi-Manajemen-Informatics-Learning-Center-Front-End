@@ -15,6 +15,7 @@ import { FaEdit } from 'react-icons/fa';
   const [editPassword, setEditPassword] = useState('');
   const [editConfirmPassword, setEditConfirmPassword] = useState('');
   const [editPicture, setEditPicture] = useState(null); // For file upload
+  const [picturePreview, setPicturePreview] = useState(null); // For previewing current or selected photo
   const [editLoading, setEditLoading] = useState(false);
   const [error, setError] = useState(null); // Keep local error state for edit operations
 
@@ -23,6 +24,7 @@ import { FaEdit } from 'react-icons/fa';
     if (profile) {
       setEditFullName(profile.fullName);
       setEditEmail(profile.email);
+      setPicturePreview(profile.pictureUrl || 'https://i.pravatar.cc/100?img=47');
     }
   }, [profile]);
 
@@ -77,7 +79,9 @@ import { FaEdit } from 'react-icons/fa';
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setEditPicture(e.target.files[0]);
+      const file = e.target.files[0];
+      setEditPicture(file);
+      setPicturePreview(URL.createObjectURL(file));
     }
   };
 
@@ -90,6 +94,7 @@ import { FaEdit } from 'react-icons/fa';
     if (profile) {
       setEditFullName(profile.fullName);
       setEditEmail(profile.email);
+      setPicturePreview(profile.pictureUrl || 'https://i.pravatar.cc/100?img=47');
     }
   }
 
@@ -190,6 +195,9 @@ import { FaEdit } from 'react-icons/fa';
               </div>
               <div className="form-group">
                 <label htmlFor="editPicture">Profile Picture</label>
+                {picturePreview && (
+                  <img src={picturePreview} alt="Preview" className="preview-image" />
+                )}
                 <input
                   type="file"
                   id="editPicture"

@@ -116,6 +116,18 @@
   background-color: #e5e7eb;
 }
 
+.preview-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 15px;
+  border: 2px solid #4d9ef7;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 
 /* Modal Styles (replicated from common modal) */
 .modal-overlay {
