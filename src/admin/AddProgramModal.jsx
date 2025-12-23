@@ -28,6 +28,7 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [thumbnailFile, setThumbnailFile] = useState(null);
+  const [showImagePreviewModal, setShowImagePreviewModal] = useState(false);
 
   // Time constraint logic
   const isSelectedDateToday = formData.availableDate ? isToday(formData.availableDate) : false;
@@ -279,7 +280,7 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
           {defaultData && (
             <div className="form-group thumbnail-upload-section">
               <label className="form-label">Current Thumbnail</label>
-              <img src={defaultData.thumbnailUrl} alt="Current thumbnail" className="thumbnail-preview" />
+              <img src={defaultData.thumbnailUrl} alt="Current thumbnail" className="thumbnail-preview" onClick={() => setShowImagePreviewModal(true)} style={{ cursor: 'pointer' }} />
               <label htmlFor="thumbnail" className="form-label">Update Thumbnail</label>
               <div className="thumbnail-controls">
                 <input 
@@ -312,6 +313,14 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
 
                     </div>
         </form>
+
+        {showImagePreviewModal && (
+          <div className="modal-overlay" onClick={() => setShowImagePreviewModal(false)}>
+            <div className="image-preview-modal-content" onClick={(e) => e.stopPropagation()}>
+              <img src={defaultData.thumbnailUrl} alt="Full-size preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

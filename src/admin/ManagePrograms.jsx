@@ -116,6 +116,14 @@ const ManagePrograms = () => {
     setPage(1); // Reset page on new search
   };
 
+  const handleDataChange = () => {
+    fetchPrograms();
+    if (editProgram) {
+      // Re-fetch the currently editing program to get the latest data
+      handleEdit(editProgram);
+    }
+  };
+
     const handleDelete = async (id) => {
 
       if (window.confirm('Yakin ingin menghapus program ini?')) {
@@ -329,7 +337,7 @@ const ManagePrograms = () => {
 
               onClose={() => setShowModal(false)}
 
-              onSave={fetchPrograms}
+              onSave={handleDataChange}
 
               defaultData={editProgram}
 
