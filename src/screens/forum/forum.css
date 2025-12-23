@@ -437,7 +437,7 @@
   padding: 4px 8px !important;
   border-radius: 6px !important;
   border: 1px solid #c8d8e8 !important;
-  margin-left: auto !important; /* Push to the right */
+  margin-left: 0 !important; /* Align to the left */
   transition: all 0.2s ease !important;
   box-shadow: none !important;
 }
