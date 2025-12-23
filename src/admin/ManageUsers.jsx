@@ -14,6 +14,7 @@ const ManageUsers = () => {
   const [searchQuery, setSearchQuery] = useState(''); // State for search input
   const [ftsQuery, setFtsQuery] = useState(''); // State for triggering FTS API call
   const [editingUser, setEditingUser] = useState(null); // State for user being edited
+  const [roleFilter, setRoleFilter] = useState(''); // State for role filter
   const abortControllerRef = React.useRef(null);
 
 
@@ -30,8 +31,11 @@ const ManageUsers = () => {
                 page,
                 limit: 20,
             };
-            if (ftsQuery) { // Only add q if ftsQuery is not empty
+            if (ftsQuery) {
                 params.q = ftsQuery;
+            }
+            if (roleFilter) {
+                params.role = roleFilter.toLowerCase();
             }
             const response = await api.get('/users', { 
                 params,
@@ -50,7 +54,7 @@ const ManageUsers = () => {
                 setLoading(false);
             }
         }
-    }, [page, ftsQuery]); // Re-fetch when page or ftsQuery changes
+    }, [page, ftsQuery, roleFilter]); // Re-fetch when page or ftsQuery changes
 
     useEffect(() => {
         fetchUsers();
@@ -91,8 +95,8 @@ const ManageUsers = () => {
       <div className="admin-page scroll-hidden" style={{ flex: 1 }}>
         <h1>Kelola Pengguna</h1>
 
-        <div className="admin-actions">
-          <form onSubmit={handleSearchSubmit} className="admin-search-form">
+        <div className="admin-actions" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <form onSubmit={handleSearchSubmit} className="admin-search-form" style={{ flexGrow: 1 }}>
             <input
               type="text"
               placeholder="Cari pengguna..."
@@ -102,6 +106,22 @@ const ManageUsers = () => {
             />
             <button type="submit" className="admin-btn add">Cari</button>
           </form>
+          <div className="filter-group">
+            <label htmlFor="role-filter" style={{ marginRight: '5px', fontWeight: '600', color: '#0d3b66' }}>Filter Role:</label>
+            <select
+              id="role-filter"
+              className="admin-select"
+              value={roleFilter}
+              onChange={(e) => {
+                setRoleFilter(e.target.value);
+                setPage(1); // Reset page when filter changes
+              }}
+            >
+              <option value="">All</option>
+              <option value="Admin">Admin</option>
+              <option value="User">User</option>
+            </select>
+          </div>
         </div>
 
         {loading ? (
