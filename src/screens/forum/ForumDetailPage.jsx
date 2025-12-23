@@ -126,12 +126,38 @@ const ForumDetailPage = () => {
     }
   }, [id]);
 
+  // Helper to fetch user details for a list of comments
+  const enrichCommentsWithAuthors = async (commentList) => {
+    return Promise.all(commentList.map(async (c) => {
+      try {
+        // If it's the current user, we might already have the profile, but for consistency and 
+        // to handle cases where profile isn't loaded or it's a different user, we fetch.
+        // Optimization: check if we already have this user's data cached if we implemented a cache, 
+        // but for now, direct fetch.
+        const userRes = await api.get(`/users/${c.userId}`);
+        const userData = userRes.data.data.user;
+        return {
+          ...c,
+          authorPictureUrl: userData.pictureUrl,
+          fullName: userData.fullName || c.fullName, // Prefer fetched name, fallback to existing
+        };
+      } catch (err) {
+        console.error(`Failed to fetch author for comment ${c.id}:`, err);
+        return c;
+      }
+    }));
+  };
+
   const fetchComments = useCallback(async () => {
     try {
       const response = await api.get(`/discussions/${id}/comments`, {
         params: { parentCommentId: 0 } // Correctly fetch top-level comments
       });
-      const topLevelComments = response.data.data.comments;
+      let topLevelComments = response.data.data.comments;
+
+      // Enrich with author details
+      topLevelComments = await enrichCommentsWithAuthors(topLevelComments);
+
       setComments(topLevelComments);
 
       // Initialize liked comments state from fetched data
@@ -166,8 +192,11 @@ const ForumDetailPage = () => {
       const response = await api.get(`/discussions/${id}/comments`, {
         params: { parentCommentId: parentCommentId }
       });
-      const fetchedReplies = response.data.data.comments;
+      let fetchedReplies = response.data.data.comments;
       
+      // Enrich with author details
+      fetchedReplies = await enrichCommentsWithAuthors(fetchedReplies);
+
       // Update replies state
       setReplies(prev => ({ ...prev, [parentCommentId]: fetchedReplies }));
 
@@ -277,6 +306,7 @@ const ForumDetailPage = () => {
               src={pictureUrl || 'https://i.pravatar.cc/30?img=6'}
               alt="Author Avatar"
               className="comment-author-avatar"
+              onError={(e) => { e.target.onerror = null; e.target.src = 'https://i.pravatar.cc/30?img=6'; }}
             />
             <strong>{comment.fullName || 'Anonim'}</strong>
             <span className="comment-time">{formatDate(comment.createdAt)}</span>
