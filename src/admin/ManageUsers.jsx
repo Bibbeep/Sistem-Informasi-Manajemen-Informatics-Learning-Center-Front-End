@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminSidebar from './AdminSidebar';
 import './admin.css';
-import api from '../services/api'; // Import your API service
+import api from '../services/api';
 import { toast } from 'react-toastify';
+import EditUserModal from './EditUserModal';
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
@@ -12,37 +13,62 @@ const ManageUsers = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState(''); // State for search input
   const [ftsQuery, setFtsQuery] = useState(''); // State for triggering FTS API call
+  const [editingUser, setEditingUser] = useState(null); // State for user being edited
+  const abortControllerRef = React.useRef(null);
 
-      const fetchUsers = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = {
-        page,
-        limit: 20,
-      };
-      if (ftsQuery) { // Only add q if ftsQuery is not empty
-        params.q = ftsQuery;
-      }
-      const response = await api.get('/users', { params });
-      setUsers(response.data.data.users);
-      setTotalPages(response.data.pagination.totalPages);
-    } catch (err) {
-      console.error("Failed to fetch users:", err);
-      setError("Gagal memuat data pengguna.");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, ftsQuery]); // Re-fetch when page or ftsQuery changes
 
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    const fetchUsers = useCallback(async () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        abortControllerRef.current = new AbortController();
+
+        setLoading(true);
+        setError(null);
+        try {
+            const params = {
+                page,
+                limit: 20,
+            };
+            if (ftsQuery) { // Only add q if ftsQuery is not empty
+                params.q = ftsQuery;
+            }
+            const response = await api.get('/users', { 
+                params,
+                signal: abortControllerRef.current.signal,
+            });
+            setUsers(response.data.data.users);
+            setTotalPages(response.data.pagination.totalPages);
+        } catch (err) {
+            if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+                return;
+            }
+            console.error("Failed to fetch users:", err);
+            setError("Gagal memuat data pengguna.");
+        } finally {
+            if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
+                setLoading(false);
+            }
+        }
+    }, [page, ftsQuery]); // Re-fetch when page or ftsQuery changes
+
+    useEffect(() => {
+        fetchUsers();
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        }
+    }, [fetchUsers]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     setFtsQuery(searchQuery); // Set FTS query from current input
     setPage(1); // Reset page on new search
+  };
+
+  const handleEdit = (user) => {
+    setEditingUser(user);
   };
 
   const handleDelete = async (userId) => {
@@ -100,8 +126,8 @@ const ManageUsers = () => {
                     <td>{user.email}</td>
                     <td>{user.role}</td>
                     <td>
-                      {/* Simplified action, assuming delete is the primary action now */}
-                      <button className="admin-btn payment-cancel" onClick={() => handleDelete(user.id)}>Hapus</button>
+                      <button className="admin-btn edit" onClick={() => handleEdit(user)} style={{marginRight: '5px'}}>Update</button>
+                      <button className="admin-btn delete" onClick={() => handleDelete(user.id)}>Hapus</button>
                     </td>
                   </tr>
                 ))
@@ -125,6 +151,14 @@ const ManageUsers = () => {
             Next
           </button>
         </div>
+
+        {editingUser && (
+          <EditUserModal
+            user={editingUser}
+            onClose={() => setEditingUser(null)}
+            onSave={fetchUsers}
+          />
+        )}
       </div>
     </div>
   );
