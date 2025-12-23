@@ -78,44 +78,95 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const programData = {
-      title: formData.title,
-      description: description,
-      availableDate: formData.availableDate ? formData.availableDate.toISOString() : null,
-      type: formData.type,
-      priceIdr: Number(formData.priceIdr),
-    };
-
-    // Add type-specific fields to the payload
-    if (formData.type === 'Seminar') {
-      programData.isOnline = formData.isOnline;
-      if(formData.isOnline) programData.videoConferenceUrl = formData.videoConferenceUrl;
-      else programData.locationAddress = formData.locationAddress;
-      programData.speakerNames = formData.speakerNames.split(',').map(s => s.trim()).filter(s => s);
-    } else if (formData.type === 'Workshop') {
-      programData.isOnline = formData.isOnline;
-      if(formData.isOnline) programData.videoConferenceUrl = formData.videoConferenceUrl;
-      else programData.locationAddress = formData.locationAddress;
-      programData.facilitatorNames = formData.facilitatorNames.split(',').map(s => s.trim()).filter(s => s);
-    } else if (formData.type === 'Competition') {
-      programData.isOnline = formData.isOnline;
-      if(formData.isOnline) programData.videoConferenceUrl = formData.videoConferenceUrl;
-      else programData.locationAddress = formData.locationAddress;
-      programData.contestRoomUrl = formData.contestRoomUrl;
-      programData.hostName = formData.hostName;
-      programData.totalPrize = Number(formData.totalPrize);
-    }
 
     try {
       if (defaultData) {
-        await api.patch(`/programs/${defaultData.id}`, programData);
+        // Update logic: only send changed fields
+        const changes = {};
+
+        // API requires 'type' to be present even if unchanged, but it cannot be modified.
+        changes.type = defaultData.type; 
+
+        if (formData.title !== defaultData.title) changes.title = formData.title;
+        if (description !== defaultData.description) changes.description = description;
+        
+        // Compare dates safely
+        const newDateISO = formData.availableDate ? formData.availableDate.toISOString() : null;
+        // defaultData.availableDate might be ISO string already
+        if (newDateISO !== defaultData.availableDate) changes.availableDate = newDateISO;
+
+        if (Number(formData.priceIdr) !== Number(defaultData.priceIdr)) changes.priceIdr = Number(formData.priceIdr);
+
+        // Type specific checks
+        if (formData.type !== 'Course') {
+           if (formData.isOnline !== defaultData.isOnline) changes.isOnline = formData.isOnline;
+           
+           if (formData.isOnline) {
+               if (formData.videoConferenceUrl !== defaultData.videoConferenceUrl) changes.videoConferenceUrl = formData.videoConferenceUrl;
+           } else {
+               if (formData.locationAddress !== defaultData.locationAddress) changes.locationAddress = formData.locationAddress;
+           }
+        }
+
+        if (formData.type === 'Seminar') {
+            const newSpeakers = formData.speakerNames.split(',').map(s => s.trim()).filter(s => s);
+            if (JSON.stringify(newSpeakers) !== JSON.stringify(defaultData.speakerNames || [])) {
+                changes.speakerNames = newSpeakers;
+            }
+        } else if (formData.type === 'Workshop') {
+            const newFacilitators = formData.facilitatorNames.split(',').map(s => s.trim()).filter(s => s);
+            if (JSON.stringify(newFacilitators) !== JSON.stringify(defaultData.facilitatorNames || [])) {
+                changes.facilitatorNames = newFacilitators;
+            }
+        } else if (formData.type === 'Competition') {
+            if (formData.contestRoomUrl !== defaultData.contestRoomUrl) changes.contestRoomUrl = formData.contestRoomUrl;
+            if (formData.hostName !== defaultData.hostName) changes.hostName = formData.hostName;
+            if (Number(formData.totalPrize) !== Number(defaultData.totalPrize)) changes.totalPrize = Number(formData.totalPrize);
+        }
+
+        if (Object.keys(changes).length <= 1) { // Only 'type' is present
+            toast.info("Tidak ada perubahan untuk disimpan.");
+            onClose();
+            return;
+        }
+        
+        await api.patch(`/programs/${defaultData.id}`, changes);
         toast.success("Program berhasil diperbarui.");
+
       } else {
+        // Create logic: send all fields
+        const programData = {
+          title: formData.title,
+          description: description,
+          availableDate: formData.availableDate ? formData.availableDate.toISOString() : null,
+          type: formData.type,
+          priceIdr: Number(formData.priceIdr),
+        };
+
+        if (formData.type === 'Seminar') {
+          programData.isOnline = formData.isOnline;
+          if(formData.isOnline) programData.videoConferenceUrl = formData.videoConferenceUrl;
+          else programData.locationAddress = formData.locationAddress;
+          programData.speakerNames = formData.speakerNames.split(',').map(s => s.trim()).filter(s => s);
+        } else if (formData.type === 'Workshop') {
+          programData.isOnline = formData.isOnline;
+          if(formData.isOnline) programData.videoConferenceUrl = formData.videoConferenceUrl;
+          else programData.locationAddress = formData.locationAddress;
+          programData.facilitatorNames = formData.facilitatorNames.split(',').map(s => s.trim()).filter(s => s);
+        } else if (formData.type === 'Competition') {
+          programData.isOnline = formData.isOnline;
+          if(formData.isOnline) programData.videoConferenceUrl = formData.videoConferenceUrl;
+          else programData.locationAddress = formData.locationAddress;
+          programData.contestRoomUrl = formData.contestRoomUrl;
+          programData.hostName = formData.hostName;
+          programData.totalPrize = Number(formData.totalPrize);
+        }
+
         await api.post('/programs', programData);
         toast.success("Program berhasil ditambahkan.");
       }
       onSave();
-      onClose(); // Only close on success
+      onClose();
     } catch (err) {
       console.error("Failed to save program:", err);
       let errorMessage = "Gagal menyimpan program. Silakan coba lagi.";
@@ -165,7 +216,7 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
           </div>
           <label>Tanggal Program</label>
           <DatePicker selected={formData.availableDate} onChange={(date) => setFormData((prev) => ({ ...prev, availableDate: date }))} dateFormat="dd MMMM yyyy" locale="id" placeholderText="Pilih tanggal" required />
-          <select name="type" value={formData.type} onChange={handleChange}>
+          <select name="type" value={formData.type} onChange={handleChange} disabled={!!defaultData}>
             <option value="Course">Course</option>
             <option value="Seminar">Seminar</option>
             <option value="Competition">Competition</option>
