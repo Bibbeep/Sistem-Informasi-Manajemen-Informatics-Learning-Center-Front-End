@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import id from 'date-fns/locale/id';
+import { isToday, setHours, setMinutes } from 'date-fns';
 import 'react-datepicker/dist/react-datepicker.css';
 import './admin.css';
 import './modals.css'; // Import the new modal styles
@@ -28,6 +29,11 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [thumbnailFile, setThumbnailFile] = useState(null);
 
+  // Time constraint logic
+  const isSelectedDateToday = formData.availableDate ? isToday(formData.availableDate) : false;
+  const minTime = isSelectedDateToday ? new Date() : undefined;
+  const maxTime = isSelectedDateToday ? setHours(setMinutes(new Date(), 59), 23) : undefined;
+  
   useEffect(() => {
     if (defaultData) {
       setFormData({
@@ -215,7 +221,20 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
             <textarea id="description" className="form-textarea scroll-hidden w-full p-2 border border-gray-300 rounded resize-none h-20" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Masukkan deskripsi singkat program..." required />
           </div>
           <label>Tanggal Program</label>
-          <DatePicker selected={formData.availableDate} onChange={(date) => setFormData((prev) => ({ ...prev, availableDate: date }))} dateFormat="dd MMMM yyyy" locale="id" placeholderText="Pilih tanggal" required />
+          <DatePicker 
+            selected={formData.availableDate} 
+            onChange={(date) => setFormData((prev) => ({ ...prev, availableDate: date }))} 
+            showTimeSelect
+            timeFormat="HH:mm"
+            timeIntervals={15}
+            dateFormat="dd MMMM yyyy HH:mm" 
+            locale="id" 
+            placeholderText="Pilih tanggal dan waktu" 
+            minDate={new Date()} // Prevent selecting past dates
+            minTime={minTime}
+            maxTime={maxTime}
+            required 
+          />
           <select name="type" value={formData.type} onChange={handleChange} disabled={!!defaultData}>
             <option value="Course">Course</option>
             <option value="Seminar">Seminar</option>
