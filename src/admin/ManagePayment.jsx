@@ -140,7 +140,7 @@ const ManagePayment = () => {
                       <td>{formatDate(invoice.paymentDueDatetime)}</td>
                       <td>{invoice.status}</td>
                       <td>
-                        {invoice.status === 'unverified' && (
+                        {invoice.status.toLowerCase() === 'unverified' && (
                           <button className="admin-btn payment-verify" onClick={() => handleVerifyPayment(invoice.id)}>
                             Verifikasi
                           </button>
