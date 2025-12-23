@@ -27,6 +27,7 @@ const ManagePrograms = () => {
   const [searchQuery, setSearchQuery] = useState(''); // State for search input
   const [ftsQuery, setFtsQuery] = useState(''); // State for triggering FTS API call
   const [availabilityFilter, setAvailabilityFilter] = useState(''); // State for availability filter
+  const [typeFilter, setTypeFilter] = useState(''); // State for type filter
   const abortControllerRef = React.useRef(null);
 
 
@@ -60,6 +61,9 @@ const ManagePrograms = () => {
       if (availabilityFilter !== '') {
         params.isAvailable = availabilityFilter;
       }
+      if (typeFilter) {
+        params.type = typeFilter.toLowerCase();
+      }
 
       const response = await api.get('/programs', { 
           params,
@@ -79,7 +83,7 @@ const ManagePrograms = () => {
             setLoading(false);
         }
     }
-  }, [page, sort.field, sort.order, ftsQuery, availabilityFilter]); // Re-fetch when page, sort, or ftsQuery changes
+  }, [page, sort.field, sort.order, ftsQuery, availabilityFilter, typeFilter]); // Re-fetch when page, sort, or ftsQuery changes
 
   useEffect(() => {
     fetchPrograms();
@@ -178,6 +182,25 @@ const ManagePrograms = () => {
                           <option value="">Semua</option>
                           <option value="true">Tersedia</option>
                           <option value="false">Tidak Tersedia</option>
+                        </select>
+                      </div>
+
+                      <div className="filter-group">
+                        <label htmlFor="type-filter" style={{ marginRight: '5px', fontWeight: '600', color: '#0d3b66' }}>Tipe:</label>
+                        <select
+                          id="type-filter"
+                          className="admin-select"
+                          value={typeFilter}
+                          onChange={(e) => {
+                            setTypeFilter(e.target.value);
+                            setPage(1); // Reset page on filter change
+                          }}
+                        >
+                          <option value="">Semua</option>
+                          <option value="Course">Course</option>
+                          <option value="Seminar">Seminar</option>
+                          <option value="Workshop">Workshop</option>
+                          <option value="Competition">Competition</option>
                         </select>
                       </div>
                     </div>
