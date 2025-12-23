@@ -16,8 +16,6 @@ const Dashboard = () => {
   const [loadingCertificates, setLoadingCertificates] = useState(true);
   const [certificateError, setCertificateError] = useState(null);
 
-  const abortControllerRef = React.useRef(null);
-
   useEffect(() => {
     const fetchCertificates = async () => {
       if (!user || !user.sub) {
@@ -26,38 +24,21 @@ const Dashboard = () => {
         return;
       }
 
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      abortControllerRef.current = new AbortController();
-
       try {
         const response = await api.get('/certificates', {
           params: { userId: user.sub, limit: 6, sort: '-issuedAt' }, // Fetch up to 6 certificates, newest first
-          signal: abortControllerRef.current.signal,
         });
         setCertificates(response.data.data.certificates);
         setCertificateError(null);
       } catch (err) {
-        if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
-          return;
-        }
         setCertificateError("Failed to load certificates.");
         console.error("Fetch error:", err);
       } finally {
-        if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
-          setLoadingCertificates(false);
-        }
+        setLoadingCertificates(false);
       }
     };
 
     fetchCertificates();
-
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
   }, [user]);
 
   return (

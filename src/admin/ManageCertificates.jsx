@@ -15,15 +15,8 @@ const ManageCertificates = () => {
   const [showModal, setShowModal] = useState(false);
   const [editData, setEditData] = useState(null);
   const [viewingCert, setViewingCert] = useState(null); // For viewing certificate
-  const abortControllerRef = React.useRef(null);
-
 
   const fetchCertificates = useCallback(async () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    abortControllerRef.current = new AbortController();
-
     setLoading(true);
     setError(null);
     try {
@@ -32,7 +25,6 @@ const ManageCertificates = () => {
           page,
           limit: 20,
         },
-        signal: abortControllerRef.current.signal,
       });
       let fetchedCerts = response.data.data.certificates;
 
@@ -70,26 +62,16 @@ const ManageCertificates = () => {
       setCertificates(enrichedCertificates);
       setTotalPages(response.data.pagination.totalPages);
     } catch (err) {
-      if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
-        return;
-      }
       console.error("Failed to fetch certificates:", err);
       setError("Gagal memuat data sertifikat.");
       toast.error("Gagal memuat data sertifikat.");
     } finally {
-      if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   }, [page]);
 
   useEffect(() => {
     fetchCertificates();
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    }
   }, [fetchCertificates]);
 
   const handleAdd = () => {

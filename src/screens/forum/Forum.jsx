@@ -22,15 +22,9 @@ const Forum = () => {
   const [searchQuery, setSearchQuery] = useState(''); // For search input field value
   const [ftsQuery, setFtsQuery] = useState(''); // Triggers FTS API call
   const [showAddModal, setShowAddModal] = useState(false); // State for Add Discussion Modal
-  const abortControllerRef = React.useRef(null);
 
   // Function to fetch discussions from API
   const fetchDiscussions = useCallback(async () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    abortControllerRef.current = new AbortController();
-
     setLoading(true);
     setError(null);
     try {
@@ -44,19 +38,11 @@ const Forum = () => {
         params.q = ftsQuery; 
       }
 
-      const response = await api.get('/discussions', { 
-        params,
-        signal: abortControllerRef.current.signal 
-      });
+      const response = await api.get('/discussions', { params });
       const discussionData = response.data.data.discussions;
       const totalPages = response.data.pagination.totalPages;
 
       // Fetch user data for each discussion
-      // Note: We can't easily cancel these individual promises with the same signal unless api.get supports it for each call.
-      // Ideally, the backend should return user data included. For now, we proceed.
-      // If the main request is cancelled, this part won't be reached usually, but strictly speaking we should handle it.
-      // However, if the main request succeeds, these should usually run.
-      
       const discussionsWithAuthors = await Promise.all(
         discussionData.map(async (discussion) => {
           try {
@@ -75,27 +61,17 @@ const Forum = () => {
       setDiscussions(discussionsWithAuthors);
       setTotalPages(totalPages);
     } catch (err) {
-      if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
-        return;
-      }
       console.error("Failed to fetch discussions:", err); // DEBUGGING LINE
       setError("Gagal memuat topik forum.");
       toast.error("Gagal memuat topik forum.");
     } finally {
-      if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   }, [page, limit, sort, ftsQuery]); // Depend on ftsQuery
 
   // Initial fetch and re-fetch on dependency changes
   useEffect(() => {
     fetchDiscussions();
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
   }, [fetchDiscussions]);
 
   const handleForumClick = (id) => {

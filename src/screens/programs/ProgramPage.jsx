@@ -116,16 +116,7 @@ const ProgramPage = () => {
     fetchEnrolledPrograms();
   }, [user]); // Refetch when user changes
 
-  const abortControllerRef = React.useRef(null);
-
   const fetchPrograms = async (currentPage, filter, isSearchOrFilterChange = false) => {
-    // Cancel previous request if it exists
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    // Create new AbortController
-    abortControllerRef.current = new AbortController();
-
     setLoading(true);
     try {
       const params = {
@@ -141,7 +132,6 @@ const ProgramPage = () => {
 
       const response = await api.get('/programs', {
         params,
-        signal: abortControllerRef.current.signal,
         paramsSerializer: params => {
           return Object.entries(params)
             .map(([key, value]) => (value !== undefined && value !== null) ? `${encodeURIComponent(key)}=${encodeURIComponent(value)}` : null)
@@ -155,17 +145,10 @@ const ProgramPage = () => {
       setHasMore(pagination.currentPage < pagination.totalPages);
       setError(null);
     } catch (err) {
-      if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
-        // Request was canceled, do nothing
-        return;
-      }
       setError('Gagal memuat program. Silakan coba lagi nanti.');
       console.error('Fetch error:', err);
     } finally {
-      // Only unset loading if this is the current request (not strictly necessary with abort, but good practice)
-      if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 

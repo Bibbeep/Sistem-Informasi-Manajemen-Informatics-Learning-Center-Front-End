@@ -24,7 +24,6 @@ const MateriPage = () => {
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'in progress', 'completed'
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
-  const abortControllerRef = React.useRef(null);
 
   useEffect(() => {
     const fetchEnrolledPrograms = async () => {
@@ -34,12 +33,6 @@ const MateriPage = () => {
         setError("User not logged in.");
         return;
       }
-
-      // Cancel previous request
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      abortControllerRef.current = new AbortController();
 
       setLoading(true);
       try {
@@ -57,7 +50,6 @@ const MateriPage = () => {
             page: page,
             status: statusParams,
           },
-          signal: abortControllerRef.current.signal,
           paramsSerializer: params => {
             const parts = [];
             for (const key in params) {
@@ -80,34 +72,21 @@ const MateriPage = () => {
         setHasMore(pagination.currentPage < pagination.totalPages);
         setError(null);
       } catch (err) {
-        if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
-          return;
-        }
         setError("Failed to load enrolled programs. Please try again.");
         console.error("Fetch error:", err);
       } finally {
-        if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
 
     fetchEnrolledPrograms();
-    
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
   }, [user, statusFilter, page]);
 
-  const handleStatusFilterChange = (newStatus) => {
-    if (newStatus !== statusFilter) {
-      setStatusFilter(newStatus);
-      setPage(1);
-      setEnrolledPrograms([]); // Clear current list immediately
-    }
-  };
+  // Reset page and programs when filter changes
+  useEffect(() => {
+    setPage(1);
+    setEnrolledPrograms([]);
+  }, [statusFilter]);
 
   const handleLoadMore = () => {
     if (hasMore) {
@@ -198,7 +177,7 @@ const MateriPage = () => {
       <div className="materi-main">
         <div className="materi-container">
           <h2 className="materi-title">My Learnings</h2>
-          <StatusFilter selected={statusFilter} onSelect={handleStatusFilterChange} />
+          <StatusFilter selected={statusFilter} onSelect={setStatusFilter} />
           {renderContent()}
         </div>
       </div>

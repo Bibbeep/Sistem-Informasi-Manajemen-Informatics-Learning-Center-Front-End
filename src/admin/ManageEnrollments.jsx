@@ -18,38 +18,22 @@ const ManageEnrollments = () => {
     const navigate = useNavigate();
 
     const debouncedSearchQuery = useDebounce(searchQuery, 500);
-    const usersAbortControllerRef = React.useRef(null);
-    const enrollmentsAbortControllerRef = React.useRef(null);
-
 
     useEffect(() => {
         const fetchUsers = async () => {
-            if (usersAbortControllerRef.current) {
-                usersAbortControllerRef.current.abort();
-            }
-            usersAbortControllerRef.current = new AbortController();
-
             setLoadingUsers(true);
             try {
                 const params = { limit: 5 };
                 if (debouncedSearchQuery) {
                     params.q = debouncedSearchQuery;
                 }
-                const response = await api.get('/users', { 
-                    params,
-                    signal: usersAbortControllerRef.current.signal,
-                });
+                const response = await api.get('/users', { params });
                 setUsers(response.data.data.users);
             } catch (error) {
-                if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
-                    return;
-                }
                 toast.error("Gagal memuat daftar pengguna.");
                 console.error("Failed to fetch users:", error);
             } finally {
-                if (usersAbortControllerRef.current && !usersAbortControllerRef.current.signal.aborted) {
-                    setLoadingUsers(false);
-                }
+                setLoadingUsers(false);
             }
         };
         fetchUsers();
@@ -60,28 +44,15 @@ const ManageEnrollments = () => {
             setEnrollments([]);
             return;
         }
-
-        if (enrollmentsAbortControllerRef.current) {
-            enrollmentsAbortControllerRef.current.abort();
-        }
-        enrollmentsAbortControllerRef.current = new AbortController();
-
         setLoadingEnrollments(true);
         try {
-            const response = await api.get(`/enrollments?userId=${selectedUser.id}&limit=100`, {
-                signal: enrollmentsAbortControllerRef.current.signal,
-            });
+            const response = await api.get(`/enrollments?userId=${selectedUser.id}&limit=100`);
             setEnrollments(response.data.data.enrollments);
         } catch (error) {
-            if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
-                return;
-            }
             toast.error("Gagal memuat data pendaftaran.");
             console.error("Failed to fetch enrollments:", error);
         } finally {
-            if (enrollmentsAbortControllerRef.current && !enrollmentsAbortControllerRef.current.signal.aborted) {
-                setLoadingEnrollments(false);
-            }
+            setLoadingEnrollments(false);
         }
     }, [selectedUser]);
 
