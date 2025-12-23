@@ -151,7 +151,7 @@ const ForumDetailPage = () => {
   const fetchComments = useCallback(async () => {
     try {
       const response = await api.get(`/discussions/${id}/comments`, {
-        params: { parentCommentId: 0 } // Correctly fetch top-level comments
+        params: { parentCommentId: 0, sort: '-likesCount' } // Correctly fetch top-level comments
       });
       let topLevelComments = response.data.data.comments;
 
@@ -190,7 +190,7 @@ const ForumDetailPage = () => {
     setLoadingReplies(prev => new Set(prev).add(parentCommentId));
     try {
       const response = await api.get(`/discussions/${id}/comments`, {
-        params: { parentCommentId: parentCommentId }
+        params: { parentCommentId: parentCommentId, sort: '-likesCount' }
       });
       let fetchedReplies = response.data.data.comments;
       
