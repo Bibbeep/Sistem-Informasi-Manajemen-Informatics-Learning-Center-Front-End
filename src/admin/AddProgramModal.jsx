@@ -37,19 +37,20 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
   
   useEffect(() => {
     if (defaultData) {
+      const details = defaultData.details || {};
       setFormData({
         title: defaultData.title || '',
         availableDate: defaultData.availableDate ? new Date(defaultData.availableDate) : null,
         type: defaultData.type || 'Course',
         priceIdr: defaultData.priceIdr || '',
-        isOnline: defaultData.isOnline !== undefined ? defaultData.isOnline : true,
-        videoConferenceUrl: defaultData.videoConferenceUrl || '',
-        locationAddress: defaultData.locationAddress || '',
-        contestRoomUrl: defaultData.contestRoomUrl || '',
-        speakerNames: Array.isArray(defaultData.speakerNames) ? defaultData.speakerNames.join(', ') : '',
-        facilitatorNames: Array.isArray(defaultData.facilitatorNames) ? defaultData.facilitatorNames.join(', ') : '',
-        hostName: defaultData.hostName || '',
-        totalPrize: defaultData.totalPrize || '',
+        isOnline: details.isOnline !== undefined ? details.isOnline : true,
+        videoConferenceUrl: details.videoConferenceUrl || '',
+        locationAddress: details.locationAddress || '',
+        contestRoomUrl: details.contestRoomUrl || '',
+        speakerNames: Array.isArray(details.speakerNames) ? details.speakerNames.join(', ') : '',
+        facilitatorNames: Array.isArray(details.facilitatorNames) ? details.facilitatorNames.join(', ') : '',
+        hostName: details.hostName || '',
+        totalPrize: details.totalPrize || '',
       });
       setDescription(defaultData.description || '');
     } else {
