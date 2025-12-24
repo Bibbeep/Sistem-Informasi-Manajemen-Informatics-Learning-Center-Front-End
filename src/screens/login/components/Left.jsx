@@ -5,6 +5,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from '../../../context/AuthContext';
 import api from '../../../services/api';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const Left = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const Left = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [forgotMode, setForgotMode] = useState(false);
@@ -103,13 +105,22 @@ const Left = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
               />
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-              />
+              <div className="password-input-container">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
               <button type="submit" className="submit-btn" disabled={loading}>
                 {loading ? 'Loading...' : 'Login'}
               </button>

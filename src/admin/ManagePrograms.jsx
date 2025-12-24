@@ -26,6 +26,10 @@ const ManagePrograms = () => {
   const [sort, setSort] = useState({ field: 'availableDate', order: 'desc' }); // Default sort by date descending
   const [searchQuery, setSearchQuery] = useState(''); // State for search input
   const [ftsQuery, setFtsQuery] = useState(''); // State for triggering FTS API call
+  const [availabilityFilter, setAvailabilityFilter] = useState(''); // State for availability filter
+  const [typeFilter, setTypeFilter] = useState(''); // State for type filter
+  const abortControllerRef = React.useRef(null);
+
 
   const handleSort = (field) => {
     setSort(prev => {
@@ -38,6 +42,11 @@ const ManagePrograms = () => {
   };
 
   const fetchPrograms = useCallback(async () => {
+    if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
     setLoading(true);
     setError(null);
     try {
@@ -46,24 +55,43 @@ const ManagePrograms = () => {
         limit: 20,
         sort: `${sort.order === 'desc' ? '-' : ''}${sort.field === 'priceIdr' ? 'price' : sort.field}`,
       };
-      if (ftsQuery) { // Add q if ftsQuery is not empty
+      if (ftsQuery) {
         params.q = ftsQuery;
       }
+      if (availabilityFilter !== '') {
+        params.isAvailable = availabilityFilter;
+      }
+      if (typeFilter) {
+        params.type = typeFilter.toLowerCase();
+      }
 
-      const response = await api.get('/programs', { params });
+      const response = await api.get('/programs', { 
+          params,
+          signal: abortControllerRef.current.signal,
+      });
       setPrograms(response.data.data.programs);
       setTotalPages(response.data.pagination.totalPages);
     } catch (err) {
+        if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+            return;
+        }
       console.error("Failed to fetch programs:", err);
       setError("Gagal memuat data program.");
       toast.error("Gagal memuat data program.");
     } finally {
-      setLoading(false);
+        if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
+            setLoading(false);
+        }
     }
-  }, [page, sort.field, sort.order, ftsQuery]); // Re-fetch when page, sort, or ftsQuery changes
+  }, [page, sort.field, sort.order, ftsQuery, availabilityFilter, typeFilter]); // Re-fetch when page, sort, or ftsQuery changes
 
   useEffect(() => {
     fetchPrograms();
+    return () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+    }
   }, [fetchPrograms]);
 
   const handleAdd = () => {
@@ -86,6 +114,14 @@ const ManagePrograms = () => {
     e.preventDefault();
     setFtsQuery(searchQuery); // Set FTS query from current input
     setPage(1); // Reset page on new search
+  };
+
+  const handleDataChange = () => {
+    fetchPrograms();
+    if (editProgram) {
+      // Re-fetch the currently editing program to get the latest data
+      handleEdit(editProgram);
+    }
   };
 
     const handleDelete = async (id) => {
@@ -126,30 +162,55 @@ const ManagePrograms = () => {
 
           
 
-                    <div className="admin-actions">
-
+                    <div className="admin-actions" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
                       <button className="admin-btn add" onClick={handleAdd}>Tambah Program</button>
-
-                      <form onSubmit={handleSearchSubmit} className="admin-search-form">
-
+                      
+                      <form onSubmit={handleSearchSubmit} className="admin-search-form" style={{ flexGrow: 1 }}>
                         <input
-
                           type="text"
-
                           placeholder="Cari program..."
-
                           value={searchQuery}
-
                           onChange={(e) => setSearchQuery(e.target.value)}
-
                           className="admin-search-input"
-
                         />
-
                         <button type="submit" className="admin-btn add">Cari</button>
-
                       </form>
 
+                      <div className="filter-group">
+                        <label htmlFor="availability-filter" style={{ marginRight: '5px', fontWeight: '600', color: '#0d3b66' }}>Ketersediaan:</label>
+                        <select
+                          id="availability-filter"
+                          className="admin-select"
+                          value={availabilityFilter}
+                          onChange={(e) => {
+                            setAvailabilityFilter(e.target.value);
+                            setPage(1); // Reset page on filter change
+                          }}
+                        >
+                          <option value="">Semua</option>
+                          <option value="true">Tersedia</option>
+                          <option value="false">Tidak Tersedia</option>
+                        </select>
+                      </div>
+
+                      <div className="filter-group">
+                        <label htmlFor="type-filter" style={{ marginRight: '5px', fontWeight: '600', color: '#0d3b66' }}>Tipe:</label>
+                        <select
+                          id="type-filter"
+                          className="admin-select"
+                          value={typeFilter}
+                          onChange={(e) => {
+                            setTypeFilter(e.target.value);
+                            setPage(1); // Reset page on filter change
+                          }}
+                        >
+                          <option value="">Semua</option>
+                          <option value="Course">Course</option>
+                          <option value="Seminar">Seminar</option>
+                          <option value="Workshop">Workshop</option>
+                          <option value="Competition">Competition</option>
+                        </select>
+                      </div>
                     </div>
 
   
@@ -276,7 +337,7 @@ const ManagePrograms = () => {
 
               onClose={() => setShowModal(false)}
 
-              onSave={fetchPrograms}
+              onSave={handleDataChange}
 
               defaultData={editProgram}
 

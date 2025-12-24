@@ -27,6 +27,7 @@
 }
 
 .form input {
+  box-sizing: border-box;
   padding: 12px 15px;
   border: 1px solid #ddd;
   border-radius: 10px;
@@ -41,6 +42,8 @@
   outline: none;
   box-shadow: 0 0 8px rgba(100, 181, 246, 0.6); /* efek glow saat focus */
 }
+
+
 
 .submit-btn {
   background-color: #3b82f6;
@@ -116,3 +119,14 @@
   color: #2563eb;
   text-decoration: underline;
 }
+
+
+
+.password-input-container {
+    position: relative;
+}
+
+.password-input-container input {
+    width: 100%;
+}
+

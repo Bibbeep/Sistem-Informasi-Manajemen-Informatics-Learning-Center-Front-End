@@ -6,6 +6,7 @@ import api from '../../services/api';
 import Right from '../login/components/Right';
 import '../login/login.css'; 
 import '../login/components/left.css';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const ResetPasswordForm = () => {
   const [searchParams] = useSearchParams();
@@ -15,6 +16,8 @@ const ResetPasswordForm = () => {
   const [userId, setUserId] = useState(null);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isValid, setIsValid] = useState(false);
@@ -45,6 +48,13 @@ const ResetPasswordForm = () => {
     }
     if (newPassword !== confirmPassword) {
       toast.error('Password tidak cocok!');
+      return;
+    }
+
+    // Password strength validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      toast.error('Password does not meet the requirements. It must be at least 12 characters long and include an uppercase letter, a lowercase letter, a number, and a symbol.');
       return;
     }
 
@@ -88,20 +98,41 @@ const ResetPasswordForm = () => {
           <p className="error-message" style={{color: 'red'}}>{error}</p>
         ) : (
           <form className="form" onSubmit={handleSubmit}>
-            <input
-              type="password"
-              placeholder="Password Baru"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              disabled={loading}
-            />
-            <input
-              type="password"
-              placeholder="Konfirmasi Password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={loading}
-            />
+                      <div className="password-input-container">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Password Baru"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          disabled={loading}
+                        />
+                        <button
+                          type="button"
+                          className="password-toggle-btn"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <FaEyeSlash /> : <FaEye />}
+                        </button>
+                      </div>
+                      <p className="password-strength-warning">
+                        Password must be at least 12 characters long and include an uppercase letter, a lowercase letter, a number, and a symbol.
+                      </p>
+                      <div className="password-input-container">
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="Konfirmasi Password Baru"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          disabled={loading}
+                        />
+                        <button
+                          type="button"
+                          className="password-toggle-btn"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        >
+                          {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                        </button>
+                      </div>
             <button type="submit" className="submit-btn" disabled={loading}>
               {loading ? 'Menyimpan...' : 'Reset Password'}
             </button>
