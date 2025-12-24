@@ -3,7 +3,7 @@ import './userprofile.css';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import { ToastContainer, toast } from 'react-toastify';
-import { FaEdit } from 'react-icons/fa';
+import { FaEdit, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 
   const UserProfile = () => {
@@ -14,6 +14,8 @@ import { FaEdit } from 'react-icons/fa';
   const [editEmail, setEditEmail] = useState('');
   const [editPassword, setEditPassword] = useState('');
   const [editConfirmPassword, setEditConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [editPicture, setEditPicture] = useState(null); // For file upload
   const [picturePreview, setPicturePreview] = useState(null); // For previewing current or selected photo
   const [editLoading, setEditLoading] = useState(false);
@@ -186,29 +188,43 @@ import { FaEdit } from 'react-icons/fa';
                   disabled={editLoading}
                 />
               </div>
-              <div className="form-group">
+              <div className="form-group password-input-container">
                 <label htmlFor="editPassword">New Password</label>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   id="editPassword"
                   value={editPassword}
                   onChange={(e) => setEditPassword(e.target.value)}
                   disabled={editLoading}
                   placeholder="Leave blank to keep current password"
                 />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
                 <p className="password-strength-warning">
                   Password must be at least 12 characters long and include an uppercase letter, a lowercase letter, a number, and a symbol.
                 </p>
               </div>
-              <div className="form-group">
+              <div className="form-group password-input-container">
                 <label htmlFor="editConfirmPassword">Confirm New Password</label>
                 <input
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   id="editConfirmPassword"
                   value={editConfirmPassword}
                   onChange={(e) => setEditConfirmPassword(e.target.value)}
                   disabled={editLoading}
                 />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
               </div>
               <div className="form-group">
                 <label htmlFor="editPicture">Profile Picture</label>

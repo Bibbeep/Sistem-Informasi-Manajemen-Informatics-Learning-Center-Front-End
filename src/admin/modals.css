@@ -215,3 +215,20 @@
   border-left: 3px solid #f59e0b; /* Amber color for warning */
 }
 
+
+.password-input-container {
+  position: relative;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  padding: 5px;
+}
+
