@@ -68,10 +68,14 @@ import { FaEdit } from 'react-icons/fa';
       }
       setShowEditModal(false);
     } catch (err) {
-      const errorMessage = err.response?.data?.message || "Failed to update profile.";
-      toast.error(errorMessage);
+      if (err.response && err.response.status === 409) {
+        toast.error("Email already in use. Please choose another.");
+      } else {
+        const errorMessage = err.response?.data?.message || "Failed to update profile.";
+        toast.error(errorMessage);
+        setError(errorMessage);
+      }
       console.error("Update error:", err);
-      setError(errorMessage);
     } finally {
       setEditLoading(false);
     }

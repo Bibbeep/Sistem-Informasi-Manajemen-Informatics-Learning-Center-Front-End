@@ -60,7 +60,11 @@ const EditUserModal = ({ user, onClose, onSave }) => {
       onClose();
     } catch (err) {
       console.error("Failed to update user:", err);
-      toast.error(err.response?.data?.message || "Failed to update user.");
+      if (err.response && err.response.status === 409) {
+        toast.error("Email already in use. Please choose another.");
+      } else {
+        toast.error(err.response?.data?.message || "Failed to update user.");
+      }
     } finally {
       setLoading(false);
     }

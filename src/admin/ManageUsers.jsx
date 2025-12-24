@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import AdminSidebar from './AdminSidebar';
 import './admin.css';
 import api from '../services/api';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import EditUserModal from './EditUserModal';
 
 const ManageUsers = () => {
@@ -179,6 +179,8 @@ const ManageUsers = () => {
             onSave={fetchUsers}
           />
         )}
+
+        <ToastContainer position="top-center" autoClose={3000} />
       </div>
     </div>
   );
