@@ -13,12 +13,14 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
   const [formData, setFormData] = useState({
     title: '',
     availableDate: null,
+    startDate: null,
+    endDate: null,
     type: 'Course',
     priceIdr: '',
     isOnline: true,
-    videoConferenceUrl: '',
-    locationAddress: '',
-    contestRoomUrl: '',
+    videoConferenceUrl: null,
+    locationAddress: null,
+    contestRoomUrl: null,
     speakerNames: '', // Storing as comma-separated string
     facilitatorNames: '', // Storing as comma-separated string
     hostName: '',
@@ -35,6 +37,8 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
       setFormData({
         title: defaultData.title || '',
         availableDate: defaultData.availableDate ? new Date(defaultData.availableDate) : null,
+        startDate: details.startDate ? new Date(details.startDate) : null,
+        endDate: details.endDate ? new Date(details.endDate) : null,
         type: defaultData.type || 'Course',
         priceIdr: defaultData.priceIdr || '',
         isOnline: details.isOnline !== undefined ? details.isOnline : true,
@@ -52,6 +56,8 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
       setFormData({
         title: '',
         availableDate: null,
+        startDate: null,
+        endDate: null,
         type: 'Course',
         priceIdr: '',
         isOnline: true,
@@ -109,6 +115,12 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
            } else {
                if (formData.locationAddress !== details.locationAddress) changes.locationAddress = formData.locationAddress;
            }
+           // Date checks
+           const newStartDateISO = formData.startDate ? formData.startDate.toISOString() : null;
+           if (newStartDateISO !== details.startDate) changes.startDate = newStartDateISO;
+
+           const newEndDateISO = formData.endDate ? formData.endDate.toISOString() : null;
+           if (newEndDateISO !== details.endDate) changes.endDate = newEndDateISO;
         }
 
         if (formData.type === 'Seminar') {
@@ -146,6 +158,11 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
           type: formData.type,
           priceIdr: Number(formData.priceIdr),
         };
+
+        if (formData.type !== 'Course') {
+          programData.startDate = formData.startDate ? formData.startDate.toISOString() : null;
+          programData.endDate = formData.endDate ? formData.endDate.toISOString() : null;
+        }
 
         if (formData.type === 'Seminar') {
           programData.isOnline = formData.isOnline;
@@ -240,6 +257,30 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
 
           {formData.type !== 'Course' && (
             <>
+              <div className="form-group">
+                <label>Tanggal Mulai</label>
+                <DatePicker 
+                  selected={formData.startDate} 
+                  onChange={(date) => setFormData((prev) => ({ ...prev, startDate: date }))} 
+                  showTimeSelect
+                  dateFormat="dd MMMM yyyy HH:mm"
+                  locale="id"
+                  placeholderText="Pilih tanggal mulai"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Tanggal Selesai</label>
+                <DatePicker 
+                  selected={formData.endDate} 
+                  onChange={(date) => setFormData((prev) => ({ ...prev, endDate: date }))} 
+                  showTimeSelect
+                  dateFormat="dd MMMM yyyy HH:mm"
+                  locale="id"
+                  placeholderText="Pilih tanggal selesai"
+                  minDate={formData.startDate}
+                />
+              </div>
               <div className="form-group">
                 <label>Tipe Pelaksanaan:</label>
                 <div className="radio-group">
