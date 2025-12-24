@@ -224,7 +224,7 @@ const MateriDetailPage = () => {
       return (
         <details key={modul.id} className="modul-dropdown">
           <summary>
-            {`Modul ${modul.numberCode}: ${modul.title || 'Module Details'}`}
+            {modul.title || 'Module Details'}
             {isCompleted && <FaCheckCircle className="completed-icon" />}
           </summary>
           <div className="modul-content">
