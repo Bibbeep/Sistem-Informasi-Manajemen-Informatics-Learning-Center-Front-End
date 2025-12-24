@@ -48,6 +48,13 @@ const ResetPasswordForm = () => {
       return;
     }
 
+    // Password strength validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      toast.error('Password does not meet the requirements. It must be at least 12 characters long and include an uppercase letter, a lowercase letter, a number, and a symbol.');
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await api.post('/auth/reset-password', {
@@ -88,21 +95,23 @@ const ResetPasswordForm = () => {
           <p className="error-message" style={{color: 'red'}}>{error}</p>
         ) : (
           <form className="form" onSubmit={handleSubmit}>
-            <input
-              type="password"
-              placeholder="Password Baru"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              disabled={loading}
-            />
-            <input
-              type="password"
-              placeholder="Konfirmasi Password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={loading}
-            />
-            <button type="submit" className="submit-btn" disabled={loading}>
+                      <input
+                        type="password"
+                        placeholder="Password Baru"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        disabled={loading}
+                      />
+                      <p className="password-strength-warning">
+                        Password must be at least 12 characters long and include an uppercase letter, a lowercase letter, a number, and a symbol.
+                      </p>
+                      <input
+                        type="password"
+                        placeholder="Konfirmasi Password Baru"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        disabled={loading}
+                      />            <button type="submit" className="submit-btn" disabled={loading}>
               {loading ? 'Menyimpan...' : 'Reset Password'}
             </button>
           </form>

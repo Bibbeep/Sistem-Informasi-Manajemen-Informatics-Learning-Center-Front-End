@@ -38,7 +38,16 @@ const EditUserModal = ({ user, onClose, onSave }) => {
       const payload = {};
       if (fullName !== user.fullName) payload.fullName = fullName;
       if (email !== user.email) payload.email = email;
-      if (password) payload.password = password;
+      if (password) {
+        // Password strength validation
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
+        if (!passwordRegex.test(password)) {
+          toast.error('Password does not meet the requirements.');
+          setLoading(false);
+          return;
+        }
+        payload.password = password;
+      }
 
       if (Object.keys(payload).length > 0) {
         await api.patch(`/users/${user.id}`, payload);
@@ -120,29 +129,31 @@ const EditUserModal = ({ user, onClose, onSave }) => {
 
           <div className="form-group" style={{ position: 'relative' }}>
             <label>New Password (Optional)</label>
-            <input
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Leave blank to keep current"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              style={{
-                position: 'absolute',
-                right: '10px',
-                top: '35px',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#666'
-              }}
-            >
-              {showPassword ? <FaEyeSlash /> : <FaEye />}
-            </button>
-          </div>
-
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Leave blank to keep current"
+                          />
+                          <p className="password-strength-warning">
+                            Password must be at least 12 characters long and include an uppercase letter, a lowercase letter, a number, and a symbol.
+                          </p>
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          style={{
+                            position: 'absolute',
+                            right: '10px',
+                            top: '35px',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#666'
+                          }}
+                        >
+                          {showPassword ? <FaEyeSlash /> : <FaEye />}
+                        </button>
+                      </div>
           <div className="modal-actions">
             <button type="submit" className="admin-btn add" disabled={loading}>
               {loading ? 'Saving...' : 'Update'}

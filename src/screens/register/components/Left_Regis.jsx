@@ -25,6 +25,13 @@ const Left_Regis = () => {
       return;
     }
 
+    // Password strength validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
+    if (!passwordRegex.test(password)) {
+      toast.error('Password does not meet the requirements. It must be at least 12 characters long and include an uppercase letter, a lowercase letter, a number, and a symbol.');
+      return;
+    }
+
     setLoading(true);
     try {
       await api.post('/auth/register', {
@@ -72,6 +79,9 @@ const Left_Regis = () => {
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
           />
+          <p className="password-strength-warning">
+            Password must be at least 12 characters long and include an uppercase letter, a lowercase letter, a number, and a symbol.
+          </p>
           <input
             type="password"
             placeholder="Confirm Password"

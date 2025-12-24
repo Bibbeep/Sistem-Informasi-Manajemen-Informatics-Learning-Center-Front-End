@@ -42,7 +42,17 @@ import { FaEdit } from 'react-icons/fa';
     const payload = {};
     if (editFullName !== profile.fullName) payload.fullName = editFullName;
     if (editEmail !== profile.email) payload.email = editEmail;
-    if (editPassword) payload.password = editPassword;
+    
+    if (editPassword) {
+      // Password strength validation
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
+      if (!passwordRegex.test(editPassword)) {
+        toast.error('Password does not meet the requirements.');
+        setEditLoading(false);
+        return;
+      }
+      payload.password = editPassword;
+    }
 
     try {
       if (Object.keys(payload).length > 0) {
@@ -186,6 +196,9 @@ import { FaEdit } from 'react-icons/fa';
                   disabled={editLoading}
                   placeholder="Leave blank to keep current password"
                 />
+                <p className="password-strength-warning">
+                  Password must be at least 12 characters long and include an uppercase letter, a lowercase letter, a number, and a symbol.
+                </p>
               </div>
               <div className="form-group">
                 <label htmlFor="editConfirmPassword">Confirm New Password</label>
