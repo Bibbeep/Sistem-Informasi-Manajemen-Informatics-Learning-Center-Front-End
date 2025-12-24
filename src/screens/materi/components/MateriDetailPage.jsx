@@ -292,6 +292,7 @@ const MateriDetailPage = () => {
         content = (
           <>
             <p><strong>Pembicara:</strong> {details.speakerNames?.join(', ') || 'N/A'}</p>
+            <p><strong>Waktu:</strong> {formatDate(details.startDate)} - {details.endDate ? formatDate(details.endDate) : 'Selesai'}</p>
             <p><strong>Lokasi:</strong> {details.isOnline ? <a href={details.videoConferenceUrl} target="_blank" rel="noopener noreferrer">Online</a> : details.locationAddress || 'N/A'}</p>
           </>
         );
@@ -300,6 +301,7 @@ const MateriDetailPage = () => {
         content = (
           <>
             <p><strong>Fasilitator:</strong> {details.facilitatorNames?.join(', ') || 'N/A'}</p>
+            <p><strong>Waktu:</strong> {formatDate(details.startDate)} - {details.endDate ? formatDate(details.endDate) : 'Selesai'}</p>
             <p><strong>Lokasi:</strong> {details.isOnline ? <a href={details.videoConferenceUrl} target="_blank" rel="noopener noreferrer">Online</a> : details.locationAddress || 'N/A'}</p>
           </>
         );
@@ -308,6 +310,7 @@ const MateriDetailPage = () => {
         content = (
           <>
             <p><strong>Host:</strong> {details.hostName || 'N/A'}</p>
+            <p><strong>Waktu:</strong> {formatDate(details.startDate)} - {details.endDate ? formatDate(details.endDate) : 'Selesai'}</p>
             <p><strong>Total Hadiah:</strong> Rp {details.totalPrize?.toLocaleString('id-ID') || '0'}</p>
             <p><strong>Lokasi:</strong> {details.isOnline ? 'Online' : details.locationAddress || 'N/A'}</p>
             {details.contestRoomUrl && <p><strong>Ruang Lomba:</strong> <a href={details.contestRoomUrl} target="_blank" rel="noopener noreferrer">Link Lomba</a></p>}
