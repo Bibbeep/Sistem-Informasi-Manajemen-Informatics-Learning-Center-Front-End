@@ -3,7 +3,7 @@ import './userprofile.css';
 import api from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 import { ToastContainer, toast } from 'react-toastify';
-import { FaEdit } from 'react-icons/fa';
+import { FaEdit, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 
   const UserProfile = () => {
@@ -14,7 +14,10 @@ import { FaEdit } from 'react-icons/fa';
   const [editEmail, setEditEmail] = useState('');
   const [editPassword, setEditPassword] = useState('');
   const [editConfirmPassword, setEditConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [editPicture, setEditPicture] = useState(null); // For file upload
+  const [picturePreview, setPicturePreview] = useState(null); // For previewing current or selected photo
   const [editLoading, setEditLoading] = useState(false);
   const [error, setError] = useState(null); // Keep local error state for edit operations
 
@@ -23,6 +26,7 @@ import { FaEdit } from 'react-icons/fa';
     if (profile) {
       setEditFullName(profile.fullName);
       setEditEmail(profile.email);
+      setPicturePreview(profile.pictureUrl || 'https://i.pravatar.cc/100?img=47');
     }
   }, [profile]);
 
@@ -40,7 +44,17 @@ import { FaEdit } from 'react-icons/fa';
     const payload = {};
     if (editFullName !== profile.fullName) payload.fullName = editFullName;
     if (editEmail !== profile.email) payload.email = editEmail;
-    if (editPassword) payload.password = editPassword;
+    
+    if (editPassword) {
+      // Password strength validation
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
+      if (!passwordRegex.test(editPassword)) {
+        toast.error('Password does not meet the requirements.');
+        setEditLoading(false);
+        return;
+      }
+      payload.password = editPassword;
+    }
 
     try {
       if (Object.keys(payload).length > 0) {
@@ -66,10 +80,14 @@ import { FaEdit } from 'react-icons/fa';
       }
       setShowEditModal(false);
     } catch (err) {
-      const errorMessage = err.response?.data?.message || "Failed to update profile.";
-      toast.error(errorMessage);
+      if (err.response && err.response.status === 409) {
+        toast.error("Email already in use. Please choose another.");
+      } else {
+        const errorMessage = err.response?.data?.message || "Failed to update profile.";
+        toast.error(errorMessage);
+        setError(errorMessage);
+      }
       console.error("Update error:", err);
-      setError(errorMessage);
     } finally {
       setEditLoading(false);
     }
@@ -77,7 +95,9 @@ import { FaEdit } from 'react-icons/fa';
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setEditPicture(e.target.files[0]);
+      const file = e.target.files[0];
+      setEditPicture(file);
+      setPicturePreview(URL.createObjectURL(file));
     }
   };
 
@@ -90,6 +110,7 @@ import { FaEdit } from 'react-icons/fa';
     if (profile) {
       setEditFullName(profile.fullName);
       setEditEmail(profile.email);
+      setPicturePreview(profile.pictureUrl || 'https://i.pravatar.cc/100?img=47');
     }
   }
 
@@ -167,29 +188,49 @@ import { FaEdit } from 'react-icons/fa';
                   disabled={editLoading}
                 />
               </div>
-              <div className="form-group">
+              <div className="form-group password-input-container">
                 <label htmlFor="editPassword">New Password</label>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   id="editPassword"
                   value={editPassword}
                   onChange={(e) => setEditPassword(e.target.value)}
                   disabled={editLoading}
                   placeholder="Leave blank to keep current password"
                 />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+                <p className="password-strength-warning">
+                  Password must be at least 12 characters long and include an uppercase letter, a lowercase letter, a number, and a symbol.
+                </p>
               </div>
-              <div className="form-group">
+              <div className="form-group password-input-container">
                 <label htmlFor="editConfirmPassword">Confirm New Password</label>
                 <input
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   id="editConfirmPassword"
                   value={editConfirmPassword}
                   onChange={(e) => setEditConfirmPassword(e.target.value)}
                   disabled={editLoading}
                 />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
               </div>
               <div className="form-group">
                 <label htmlFor="editPicture">Profile Picture</label>
+                {picturePreview && (
+                  <img src={picturePreview} alt="Preview" className="preview-image" />
+                )}
                 <input
                   type="file"
                   id="editPicture"

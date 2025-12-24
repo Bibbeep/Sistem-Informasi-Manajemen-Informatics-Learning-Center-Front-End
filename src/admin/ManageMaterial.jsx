@@ -177,7 +177,7 @@ const ManageMaterial = () => {
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>No. Modul</th>
+                  <th>Judul Modul</th>
                   <th>Link YouTube</th>
                   <th>Aksi</th>
                 </tr>
@@ -191,10 +191,10 @@ const ManageMaterial = () => {
                   </tr>
                 ) : (
                   modules
-                    .sort((a, b) => a.numberCode - b.numberCode)
+                    .sort((a, b) => a.id - b.id)
                     .map(mod => (
                       <tr key={mod.id}>
-                        <td>{mod.numberCode}</td>
+                        <td>{mod.title}</td>
                         <td>
                           <a href={mod.youtubeUrl} target="_blank" rel="noreferrer">
                             {mod.youtubeUrl}

@@ -6,19 +6,19 @@ import { toast } from 'react-toastify';
 
 const AddMaterialModal = ({ onClose, onSave, defaultData, programId }) => {
   const [formData, setFormData] = useState({
-    numberCode: '',
+    title: '',
     youtubeUrl: '',
   });
 
   useEffect(() => {
     if (defaultData) {
       setFormData({
-        numberCode: defaultData.numberCode || '',
+        title: defaultData.title || '',
         youtubeUrl: defaultData.youtubeUrl || '',
       });
     } else {
       setFormData({
-        numberCode: '',
+        title: '',
         youtubeUrl: '',
       });
     }
@@ -31,14 +31,14 @@ const AddMaterialModal = ({ onClose, onSave, defaultData, programId }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.numberCode || !formData.youtubeUrl) {
-      toast.error('Nomor modul dan link YouTube harus diisi!');
+    if (!formData.title) {
+      toast.error('Judul modul harus diisi!');
       return;
     }
 
     const moduleData = {
-      numberCode: Number(formData.numberCode),
-      youtubeUrl: formData.youtubeUrl,
+      title: formData.title,
+      youtubeUrl: formData.youtubeUrl || null, // Send null if empty
     };
 
     try {
@@ -63,26 +63,24 @@ const AddMaterialModal = ({ onClose, onSave, defaultData, programId }) => {
         <h2>{defaultData ? 'Update Modul' : 'Tambah Modul'}</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Nomor Modul</label>
+            <label>Judul Modul</label>
             <input
-              type="number"
-              name="numberCode"
-              min="1"
-              value={formData.numberCode}
+              type="text"
+              name="title"
+              value={formData.title}
               onChange={handleChange}
-              placeholder="Contoh: 1"
+              placeholder="Contoh: Pengenalan React"
               required
             />
           </div>
           <div className="form-group">
-            <label>Link YouTube</label>
+            <label>Link YouTube (Opsional)</label>
             <input
               type="text"
               name="youtubeUrl"
               placeholder="https://youtube.com/..."
               value={formData.youtubeUrl}
               onChange={handleChange}
-              required
             />
           </div>
 

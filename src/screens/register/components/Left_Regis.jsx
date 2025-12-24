@@ -4,6 +4,7 @@ import './left_regis.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import api from '../../../services/api';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const Left_Regis = () => {
   const navigate = useNavigate();
@@ -11,6 +12,8 @@ const Left_Regis = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -22,6 +25,13 @@ const Left_Regis = () => {
     }
     if (password !== confirmPassword) {
       toast.error('Password dan konfirmasi password tidak cocok!');
+      return;
+    }
+
+    // Password strength validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
+    if (!passwordRegex.test(password)) {
+      toast.error('Password does not meet the requirements. It must be at least 12 characters long and include an uppercase letter, a lowercase letter, a number, and a symbol.');
       return;
     }
 
@@ -65,20 +75,41 @@ const Left_Regis = () => {
             onChange={(e) => setEmail(e.target.value)}
             disabled={loading}
           />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={loading}
-          />
-          <input
-            type="password"
-            placeholder="Confirm Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            disabled={loading}
-          />
+          <div className="password-input-container">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+            />
+            <button
+              type="button"
+              className="password-toggle-btn"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
+          <p className="password-strength-warning">
+            Password must be at least 12 characters long and include an uppercase letter, a lowercase letter, a number, and a symbol.
+          </p>
+          <div className="password-input-container">
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              disabled={loading}
+            />
+            <button
+              type="button"
+              className="password-toggle-btn"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
           <button type="submit" className="submit-btn" disabled={loading}>
             {loading ? 'Submitting...' : 'Submit'}
           </button>

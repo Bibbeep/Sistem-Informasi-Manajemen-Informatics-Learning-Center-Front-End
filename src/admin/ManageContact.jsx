@@ -66,7 +66,7 @@ const ManageContact = () => {
       );
       
       setViewingFeedback({ ...detailedFeedback, responses: responsesWithAdminNames });
-      setResponseMessage(detailedFeedback.responses.length > 0 ? detailedFeedback.responses[0].message : ''); // Pre-fill with latest response
+      setResponseMessage(''); // Always start with an empty response
     } catch (err) {
       console.error("Failed to fetch detailed feedback:", err);
       toast.error("Gagal memuat detail feedback.");
