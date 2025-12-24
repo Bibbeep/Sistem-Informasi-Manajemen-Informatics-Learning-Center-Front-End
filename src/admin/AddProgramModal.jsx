@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import id from 'date-fns/locale/id';
-import { isToday, setHours, setMinutes } from 'date-fns';
 import 'react-datepicker/dist/react-datepicker.css';
 import './admin.css';
 import './modals.css'; // Import the new modal styles
@@ -30,11 +29,6 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [showImagePreviewModal, setShowImagePreviewModal] = useState(false);
 
-  // Time constraint logic
-  const isSelectedDateToday = formData.availableDate ? isToday(formData.availableDate) : false;
-  const minTime = isSelectedDateToday ? new Date() : undefined;
-  const maxTime = isSelectedDateToday ? setHours(setMinutes(new Date(), 59), 23) : undefined;
-  
   useEffect(() => {
     if (defaultData) {
       const details = defaultData.details || {};
@@ -234,9 +228,6 @@ const AddProgramModal = ({ onClose, onSave, defaultData }) => {
             dateFormat="dd MMMM yyyy HH:mm" 
             locale="id" 
             placeholderText="Pilih tanggal dan waktu" 
-            minDate={new Date()} // Prevent selecting past dates
-            minTime={minTime}
-            maxTime={maxTime}
             required 
           />
           <select name="type" value={formData.type} onChange={handleChange} disabled={!!defaultData}>
